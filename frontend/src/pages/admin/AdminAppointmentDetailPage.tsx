@@ -74,6 +74,7 @@ export function AdminAppointmentDetailPage() {
         Back to appointment register
       </Link>
       <PageHeader
+        showBack={false}
         eyebrow={`Administration | Appointment #${appointment.appointment_id}`}
         title={patient?.name ?? "Appointment record"}
         description="Full administrative view of this outpatient visit. Clinical notes remain read only here."

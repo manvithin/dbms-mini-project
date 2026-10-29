@@ -272,7 +272,7 @@ Administrator routes cover:
 * Time off: list, create, delete.
 * Appointments: list with filters, detail, cancel.
 
-The summary endpoint uses joins and aggregates to produce counts for the dashboard.
+The summary endpoint uses joins and aggregates to produce counts and live preview lists for the dashboard.
 
 Schedule creation checks overlap with other active schedules for the same doctor and day. Time off creation checks overlapping time off entries. These checks return friendly errors before the database constraint is reached.
 
@@ -349,6 +349,8 @@ This removes repeated request boilerplate from pages.
 | Component | Use |
 | --- | --- |
 | `Button` | Variants, loading state, disabled state |
+| `BackButton` | History aware back navigation with a role home or public home fallback |
+| `PageHeader` | Page title, description, actions, and the shared back button |
 | `Card` | Consistent surface and spacing |
 | `Form` | Labels, fields, errors, layout |
 | `Modal` | Accessible dialog with Escape and focus handling |
@@ -356,7 +358,7 @@ This removes repeated request boilerplate from pages.
 | `StatusBadge` | Colour per appointment or test status |
 | `StatusTimeline` | Appointment audit history |
 | `ClinicalRecord` | Tests, diagnosis, prescription, print link |
-| `StatCard` | Colourful dashboard metric |
+| `StatCard` | Colourful dashboard metric with live preview rows and filter links |
 | `DoctorAvatar` | Synthetic portrait with fallback initials |
 | `Avatar` | User avatar with portrait support |
 | `EmptyState` | Friendly empty state with optional action |
@@ -365,6 +367,14 @@ This removes repeated request boilerplate from pages.
 | `Alert` | Inline error or information message |
 | `Tabs` | Section switching |
 | `PrintHeader` | Hospital identity on print pages |
+
+### `src/layouts/`
+
+| Layout | Use |
+| --- | --- |
+| `PublicLayout` | Top navigation, public back button, and footer |
+| `AppLayout` | Left sidebar and mobile drawer for signed in areas |
+| `PrintLayout` | Print header, back button, and print action |
 
 ### `src/pages/patient/`
 
@@ -377,7 +387,7 @@ This removes repeated request boilerplate from pages.
 
 ### `src/pages/doctor/`
 
-* `DoctorDashboardPage` shows today counts, upcoming visits, and pending tests.
+* `DoctorDashboardPage` shows today counts, live patient previews, upcoming visits, and pending tests.
 * `DoctorAppointmentsPage` filters the doctor appointment list.
 * `ConsultationPage` is the clinical workspace. It shows patient context, status controls, tests, results, diagnosis, prescription, and print actions.
 
@@ -385,7 +395,7 @@ This removes repeated request boilerplate from pages.
 
 Each management area has its own page:
 
-* `AdminDashboardPage`
+* `AdminDashboardPage` shows live counts, patient and test previews, department activity, status links, and the recent appointment register.
 * `AdminDoctorsPage`
 * `AdminDepartmentsPage`
 * `AdminSchedulesPage`

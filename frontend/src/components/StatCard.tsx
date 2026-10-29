@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 type Tone = "brand" | "gold" | "sky" | "rose" | "violet" | "emerald" | "orange" | "cyan";
 
@@ -61,22 +63,37 @@ const tones: Record<Tone, { card: string; icon: string; value: string; bar: stri
   },
 };
 
+export interface StatItem {
+  id?: string | number;
+  label: string;
+  meta?: string;
+  to?: string;
+}
+
 export function StatCard({
   label,
   value,
   hint,
   icon,
   tone = "brand",
+  items,
+  emptyText = "No matching records yet.",
+  to,
+  linkLabel = "View details",
 }: {
   label: string;
   value: number | string;
   hint?: string;
   icon: ReactNode;
   tone?: Tone;
+  items?: StatItem[];
+  emptyText?: string;
+  to?: string;
+  linkLabel?: string;
 }) {
   const selected = tones[tone];
   return (
-    <div className={`relative overflow-hidden rounded-xl2 border bg-gradient-to-br p-5 shadow-soft ${selected.card}`}>
+    <div className={`relative flex h-full flex-col overflow-hidden rounded-xl2 border bg-gradient-to-br p-5 shadow-soft ${selected.card}`}>
       <div className={`pointer-events-none absolute -right-9 -top-10 h-28 w-28 rounded-full ${selected.blob}`} aria-hidden="true" />
       <div className="relative flex items-start justify-between gap-3">
         <p className="text-sm font-semibold text-muted">{label}</p>
@@ -87,6 +104,44 @@ export function StatCard({
       <p className={`relative mt-3 font-display text-4xl font-semibold tracking-tight ${selected.value}`}>{value}</p>
       {hint ? <p className="relative mt-1 text-xs leading-5 text-muted">{hint}</p> : null}
       <div className={`relative mt-4 h-1.5 w-14 rounded-full ${selected.bar}`} aria-hidden="true" />
+      {items ? (
+        <div className="relative mt-4 space-y-1 border-t border-black/5 pt-3">
+          {items.length === 0 ? (
+            <p className="rounded-lg bg-white/60 px-2.5 py-2 text-xs leading-5 text-muted">{emptyText}</p>
+          ) : (
+            items.map((item, index) => {
+              const content = (
+                <>
+                  <span className="min-w-0 truncate font-semibold text-ink">{item.label}</span>
+                  {item.meta ? <span className="shrink-0 text-[11px] font-medium text-muted">{item.meta}</span> : null}
+                </>
+              );
+              return item.to ? (
+                <Link
+                  key={item.id ?? `${item.label}-${index}`}
+                  to={item.to}
+                  className="-mx-1 flex items-center justify-between gap-2 rounded-lg px-1.5 py-1.5 text-xs transition hover:bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
+                >
+                  {content}
+                </Link>
+              ) : (
+                <div key={item.id ?? `${item.label}-${index}`} className="flex items-center justify-between gap-2 px-0.5 py-1 text-xs">
+                  {content}
+                </div>
+              );
+            })
+          )}
+        </div>
+      ) : null}
+      {to ? (
+        <Link
+          to={to}
+          className="relative mt-auto inline-flex items-center gap-1 pt-4 text-xs font-bold text-brand-700 transition hover:text-brand-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
+        >
+          {linkLabel}
+          <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+        </Link>
+      ) : null}
     </div>
   );
 }

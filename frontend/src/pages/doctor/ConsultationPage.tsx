@@ -246,6 +246,7 @@ export function ConsultationPage() {
         Back to appointment list
       </Link>
       <PageHeader
+        showBack={false}
         eyebrow={`Appointment #${appointment.appointment_id}`}
         title={patient?.name ?? "Patient consultation"}
         description={`${formatDateLong(appointment.appointment_date)} at ${formatTime(appointment.appointment_time)} | ${appointment.doctor?.department_name ?? "Outpatient"}`}

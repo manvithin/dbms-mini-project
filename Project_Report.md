@@ -288,13 +288,17 @@ Key screens:
 
 * Public home page with departments, featured doctors, and care information.
 * Doctor directory and doctor detail page with clinic hours and live slots.
-* Patient overview with next appointment, quick actions, and recent visits.
+* Patient overview with next appointment, quick actions, recent visits, and live visit and record cards.
 * Booking page with doctor, date, and slot selection.
 * Patient records and appointment detail with clinical timeline.
-* Doctor dashboard with today counts and upcoming visits.
+* Doctor dashboard with today counts, live patient previews, and upcoming visits.
 * Consultation workspace with status controls, tests, diagnosis, and prescription.
-* Administrator dashboard with colour coded metrics and management pages.
+* Administrator dashboard with colour coded metrics, live patient and test previews, and links into the appointment register.
 * Print layouts for confirmation, record, tests, and history.
+
+Every page has a back control. Signed in pages use the shared page header button, public pages use the public layout button, and detail pages keep a contextual link back to their list. The print layout provides its own back button.
+
+The dashboard cards are data driven. Administrator and doctor cards list real patient names and link to filtered appointment lists or individual records. Patient cards show the next visit and the latest clinical record. Empty cards explain that no matching records exist.
 
 ![Patient overview](screenshots/03-patient-dashboard.png)
 
@@ -310,11 +314,11 @@ The interface provides loading skeletons, empty states, inline validation, succe
 
 | Suite | Result |
 | --- | --- |
-| Backend Pytest | 41 passed in 78.26 seconds |
+| Backend Pytest | 42 passed in 84.89 seconds |
 | Frontend Vitest | 23 passed across 7 files |
 | TypeScript and Vite build | Passed |
 
-Backend tests cover authentication, password hashing, role isolation, public directory search, availability, booking, duplicate booking, concurrent booking, cancellation, slot release, trigger history, stored procedure presence, unique slot constraint, check constraint, status transitions, clinical record rules, tests, results, diagnosis, prescription, pagination, validation, and administrator management.
+Backend tests cover authentication, password hashing, role isolation, public directory search, availability, booking, duplicate booking, concurrent booking, cancellation, slot release, trigger history, stored procedure presence, unique slot constraint, check constraint, status transitions, clinical record rules, tests, results, diagnosis, prescription, pagination, validation, dashboard summary previews, and administrator management.
 
 Frontend tests cover formatting, protected routes, API loading and failure behaviour, clinical record rendering, pagination, button states, and modal behaviour.
 
@@ -327,6 +331,8 @@ The following workflows were checked in a real browser against the running appli
 * Doctor sign in, dashboard, appointment status updates, test order, result, diagnosis, prescription, and print views.
 * Administrator sign in, dashboard, department creation, doctor creation, schedule management, time off, appointment filtering, and cancellation.
 * Role isolation between patient, doctor, and administrator routes.
+* Back navigation on public, signed in, detail, and print pages.
+* Live dashboard cards with real patient previews and links to filtered lists or records.
 * Empty, loading, success, validation, and failure states.
 
 Details and test names are in [Test_Report.md](Test_Report.md).

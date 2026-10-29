@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { ArrowRight, LogOut, Menu, X } from "lucide-react";
 import { useAuth, roleHome } from "../auth/AuthContext";
-import { Logo } from "../components/Logo";
 import { Avatar } from "../components/Avatar";
+import { BackButton } from "../components/BackButton";
 import { Button, LinkButton } from "../components/Button";
 import { DoctorAvatar } from "../components/DoctorAvatar";
+import { Logo } from "../components/Logo";
 
 export function PublicLayout() {
   const { user, logout } = useAuth();
@@ -116,6 +117,11 @@ export function PublicLayout() {
         ) : null}
       </header>
       <main>
+        {!location.pathname.startsWith("/doctors/") ? (
+          <div className="content-width pt-4">
+            <BackButton fallbackTo="/" />
+          </div>
+        ) : null}
         <Outlet />
       </main>
       <footer className="border-t border-line bg-white">

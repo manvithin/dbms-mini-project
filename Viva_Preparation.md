@@ -351,13 +351,13 @@ Semantic elements, labels, focus styles, keyboard handling in the modal, descrip
 ## I. Testing
 
 **Q111. How many backend tests are there?**
-Forty one.
+Forty two.
 
 **Q112. How many frontend tests are there?**
 Twenty three across seven files.
 
 **Q113. What do the backend tests cover?**
-Authentication, password hashing, role isolation, directory search, availability, booking, duplicate booking, concurrent booking, cancellation, audit history, trigger and procedure presence, constraints, status transitions, clinical records, tests, results, diagnosis, prescription, pagination, validation, and administrator management.
+Authentication, password hashing, role isolation, directory search, availability, booking, duplicate booking, concurrent booking, cancellation, audit history, trigger and procedure presence, constraints, status transitions, clinical records, tests, results, diagnosis, prescription, pagination, validation, dashboard summary previews, and administrator management.
 
 **Q114. How is concurrency tested?**
 Two threads attempt to book the same slot. The test verifies that only one appointment row exists.
@@ -434,3 +434,9 @@ The brief asks for an undergraduate mini project that a student can understand a
 
 **Q137. How do you create an administrator or doctor account?**
 Public registration creates patients only. An administrator creates a doctor account from the **Doctors** page by entering the doctor details, login email, and temporary password. Additional administrator accounts are created with the controlled `flask create-admin` command. The command prompts for a password, hashes it, and creates an account with the `admin` role and no patient or doctor link.
+
+**Q138. How do the dashboard count cards stay live?**
+The administrator and doctor summary endpoints return totals together with small preview lists. The cards render those previews with real patient names, and each row links to a filtered list or the appointment record.
+
+**Q139. How is back navigation handled on every page?**
+A shared `BackButton` uses browser history when it exists and falls back to the role home or the public home page. The shared page header includes it on signed in pages, the public layout includes it on public pages, detail pages keep a contextual back link, and the print layout has its own back button.

@@ -147,20 +147,48 @@ export function PatientOverviewPage() {
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3">
               <Link to="/patient/appointments" className="group relative overflow-hidden rounded-xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white p-4 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500 text-white shadow-sm">
-                  <CalendarDays className="h-4 w-4" aria-hidden="true" />
+                <div className="flex items-start justify-between gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500 text-white shadow-sm">
+                    <CalendarDays className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <span className="font-display text-2xl font-semibold text-sky-900">{upcomingState.data?.pagination.total ?? upcoming.length}</span>
+                </div>
+                <p className="mt-2 text-xs font-semibold text-muted">Upcoming visits</p>
+                {next ? (
+                  <div className="mt-2 rounded-lg bg-white/75 px-3 py-2">
+                    <p className="truncate text-xs font-semibold text-ink">{next.doctor?.name ?? "Care team"}</p>
+                    <p className="mt-0.5 text-[11px] text-muted">{formatDate(next.appointment_date)} at {formatTime(next.appointment_time)}</p>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-xs text-muted">No upcoming visit booked.</p>
+                )}
+                <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-sky-800">
+                  View appointments
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                 </span>
-                <p className="mt-3 font-display text-2xl font-semibold text-sky-900">{upcoming.length}</p>
-                <p className="text-xs font-semibold text-muted">Upcoming visits</p>
               </Link>
               <Link to="/patient/records" className="group relative overflow-hidden rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-4 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500 text-white shadow-sm">
-                  <FileText className="h-4 w-4" aria-hidden="true" />
+                <div className="flex items-start justify-between gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500 text-white shadow-sm">
+                    <FileText className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <span className="font-display text-2xl font-semibold text-violet-900">{recordsState.data?.pagination.total ?? 0}</span>
+                </div>
+                <p className="mt-2 text-xs font-semibold text-muted">Clinical records</p>
+                {records[0] ? (
+                  <div className="mt-2 rounded-lg bg-white/75 px-3 py-2">
+                    <p className="truncate text-xs font-semibold text-ink">{records[0].diagnosis?.diagnosis_description ?? "Clinical notes available"}</p>
+                    <p className="mt-0.5 text-[11px] text-muted">{formatDate(records[0].appointment_date)} | {records[0].doctor?.name ?? "Care team"}</p>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-xs text-muted">No clinical records yet.</p>
+                )}
+                <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-violet-800">
+                  View records
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                 </span>
-                <p className="mt-3 font-display text-2xl font-semibold text-violet-900">{recordsState.data?.pagination.total ?? 0}</p>
-                <p className="text-xs font-semibold text-muted">Clinical records</p>
               </Link>
             </div>
           </div>

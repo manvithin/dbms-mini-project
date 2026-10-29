@@ -29,6 +29,29 @@ def test_admin_summary_uses_joins_and_aggregates(client, seeded):
     }
     assert set(department_counts) == {"General Medicine", "Cardiology"}
     assert sum(department_counts.values()) == 5
+    assert all("department_id" in item for item in summary["appointments_by_department"])
+    assert summary["today_appointments"][0]["patient"]["name"] == "Riya Kapoor"
+    assert summary["recent_completed_appointments"][0]["status"] == "Completed"
+    assert summary["recent_cancelled_appointments"] == []
+    assert summary["pending_test_orders"] == []
+    assert summary["recent_patients"][0]["name"] in {"Riya Kapoor", "Arjun Mehta"}
+    assert summary["active_doctor_preview"][0]["department_name"] in {
+        "General Medicine",
+        "Cardiology",
+    }
+
+
+def test_doctor_summary_includes_live_patient_previews(client, seeded):
+    login(client, "asha.rao@example.com", "Doctor@123")
+    response = client.get("/api/doctor/summary")
+    assert response.status_code == 200
+    summary = response.get_json()["summary"]
+
+    assert summary["distinct_patients"] == 1
+    assert summary["recent_patients"][0]["name"] == "Riya Kapoor"
+    assert summary["recent_patients"][0]["phone"] == "+91 90000 20001"
+    assert summary["recent_patients"][0]["blood_group"] == "B positive"
+    assert summary["pending_test_orders"] == []
 
 
 def test_admin_can_create_department_and_duplicate_is_rejected(client, seeded):

@@ -51,13 +51,17 @@ Key database features:
 
 The signed in areas use a left sidebar. The public area uses a top navigation bar. On small screens the menu button sits on the left beside the General Hospital logo and opens a left drawer.
 
+Every page has a back control. Signed in pages use the shared page header button, public pages use the public layout button, and detail pages keep a contextual link back to their list. The print layout provides its own back button.
+
+Dashboard count cards are data driven. Each card shows a total, a short list of real patient or visit records, and a link to the matching filtered list or appointment record. Empty cards explain that no matching records exist.
+
 The visual system includes synthetic doctor portraits, department illustrations, health artwork, colour coded statistics, status badges, loading skeletons, empty states, validation messages, success notifications, and print layouts.
 
 ### Verification
 
 | Check | Result |
 | --- | --- |
-| Backend tests | 41 passed |
+| Backend tests | 42 passed |
 | Frontend tests | 23 passed across 7 files |
 | Production build | Passed |
 | Demo data reset | Passed |

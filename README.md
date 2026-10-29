@@ -12,7 +12,7 @@ The application is implemented and verified in this workspace.
 
 | Check | Result |
 | --- | --- |
-| Backend tests | 41 passed |
+| Backend tests | 42 passed |
 | Frontend tests | 23 passed across 7 files |
 | Production build | Passed |
 | Demo data reset | Passed |
@@ -40,6 +40,12 @@ Doctors are hospital users with narrower clinical permissions than administrator
 5. The doctor checks the patient in and records clinical work.
 6. Diagnostic tests are optional. A diagnosis and prescription can exist without tests.
 7. The patient sees the completed record and can print it.
+
+## Interface
+
+The public area uses a top navigation bar. The signed in areas use a left sidebar, and on small screens the menu button sits on the left beside the General Hospital logo. Every page has a back control. Signed in pages use the shared page header button, public pages use the public layout button, and detail pages keep a contextual link back to their list.
+
+Dashboard count cards are data driven. Each card shows the total, a short list of real patient or visit records, and a link to the matching filtered list or appointment record. Empty cards explain that no matching records exist.
 
 ## Technology
 

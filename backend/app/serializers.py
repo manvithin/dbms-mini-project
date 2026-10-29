@@ -202,3 +202,18 @@ def serialize_appointment_detail(appointment):
     data["diagnosis"] = serialize_diagnosis(appointment.diagnosis)
     data["status_history"] = [serialize_status_history(entry) for entry in appointment.status_history]
     return data
+
+
+def serialize_pending_test(test):
+    appointment = test.appointment
+    return {
+        "test_id": test.test_id,
+        "test_type": test.test_type,
+        "status": test.status,
+        "order_date": iso_utc(test.order_date),
+        "appointment_id": appointment.appointment_id,
+        "appointment_date": appointment.appointment_date.isoformat(),
+        "appointment_time": hhmm(appointment.appointment_time),
+        "patient": serialize_patient_mini(appointment.patient) if appointment.patient else None,
+        "doctor": serialize_doctor(appointment.doctor) if appointment.doctor else None,
+    }

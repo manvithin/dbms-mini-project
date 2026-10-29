@@ -30,6 +30,12 @@ export function AdminDashboardPage() {
   const summary = state.data?.summary;
   const recent = state.data?.recent_appointments ?? [];
   const maxDepartment = Math.max(1, ...(summary?.appointments_by_department.map((item) => item.appointment_count) ?? [0]));
+  const todayAppointments = summary?.today_appointments ?? [];
+  const recentCompleted = summary?.recent_completed_appointments ?? [];
+  const recentCancelled = summary?.recent_cancelled_appointments ?? [];
+  const pendingTestOrders = summary?.pending_test_orders ?? [];
+  const recentPatients = summary?.recent_patients ?? [];
+  const activeDoctors = summary?.active_doctor_preview ?? [];
 
   return (
     <div>
@@ -61,12 +67,101 @@ export function AdminDashboardPage() {
       ) : summary ? (
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <StatCard label="Patients" value={summary.patients} hint="Registered patient records" icon={<UsersRound className="h-5 w-5" aria-hidden="true" />} />
-            <StatCard label="Active doctors" value={summary.doctors} hint={`${summary.departments} departments in service`} icon={<Stethoscope className="h-5 w-5" aria-hidden="true" />} tone="sky" />
-            <StatCard label="Appointments today" value={summary.appointments_today} hint={`${summary.upcoming_appointments} upcoming in total`} icon={<CalendarCheck2 className="h-5 w-5" aria-hidden="true" />} tone="gold" />
-            <StatCard label="Pending tests" value={summary.pending_tests} hint="Orders still waiting for a result" icon={<FlaskConical className="h-5 w-5" aria-hidden="true" />} tone="rose" />
-            <StatCard label="Completed visits" value={summary.completed_appointments} hint="Finished outpatient consultations" icon={<ClipboardList className="h-5 w-5" aria-hidden="true" />} tone="emerald" />
-            <StatCard label="Cancelled visits" value={summary.cancelled_appointments} hint="Appointments cancelled by any user" icon={<Activity className="h-5 w-5" aria-hidden="true" />} tone="orange" />
+            <StatCard
+              label="Patients"
+              value={summary.patients}
+              hint="Registered patient records"
+              icon={<UsersRound className="h-5 w-5" aria-hidden="true" />}
+              items={recentPatients.map((patient) => ({
+                id: patient.patient_id,
+                label: patient.name,
+                meta: patient.blood_group,
+                to: `/admin/appointments?search=${encodeURIComponent(patient.name)}`,
+              }))}
+              emptyText="No patient records have been added yet."
+              to="/admin/appointments"
+              linkLabel="Search patient appointments"
+            />
+            <StatCard
+              label="Active doctors"
+              value={summary.doctors}
+              hint={`${summary.departments} departments in service`}
+              icon={<Stethoscope className="h-5 w-5" aria-hidden="true" />}
+              tone="sky"
+              items={activeDoctors.map((doctor) => ({
+                id: doctor.doctor_id,
+                label: doctor.name,
+                meta: doctor.department_name ?? doctor.specialization,
+                to: "/admin/doctors",
+              }))}
+              emptyText="No active doctors are available."
+              to="/admin/doctors"
+              linkLabel="Manage doctors"
+            />
+            <StatCard
+              label="Appointments today"
+              value={summary.appointments_today}
+              hint={`${summary.upcoming_appointments} upcoming in total`}
+              icon={<CalendarCheck2 className="h-5 w-5" aria-hidden="true" />}
+              tone="gold"
+              items={todayAppointments.map((appointment) => ({
+                id: appointment.appointment_id,
+                label: appointment.patient?.name ?? "Patient",
+                meta: `${formatTime(appointment.appointment_time)} | ${appointment.status}`,
+                to: `/admin/appointments/${appointment.appointment_id}`,
+              }))}
+              emptyText="No appointments are scheduled for today."
+              to="/admin/appointments?scope=today"
+              linkLabel="Open today's register"
+            />
+            <StatCard
+              label="Pending tests"
+              value={summary.pending_tests}
+              hint="Orders still waiting for a result"
+              icon={<FlaskConical className="h-5 w-5" aria-hidden="true" />}
+              tone="rose"
+              items={pendingTestOrders.map((test) => ({
+                id: test.test_id,
+                label: test.patient?.name ?? "Patient",
+                meta: test.test_type,
+                to: `/admin/appointments/${test.appointment_id}`,
+              }))}
+              emptyText="No test orders are waiting for a result."
+              to="/admin/appointments"
+              linkLabel="Review appointments"
+            />
+            <StatCard
+              label="Completed visits"
+              value={summary.completed_appointments}
+              hint="Finished outpatient consultations"
+              icon={<ClipboardList className="h-5 w-5" aria-hidden="true" />}
+              tone="emerald"
+              items={recentCompleted.map((appointment) => ({
+                id: appointment.appointment_id,
+                label: appointment.patient?.name ?? "Patient",
+                meta: formatDate(appointment.appointment_date),
+                to: `/admin/appointments/${appointment.appointment_id}`,
+              }))}
+              emptyText="No completed visits have been recorded yet."
+              to="/admin/appointments?status=Completed"
+              linkLabel="Open completed visits"
+            />
+            <StatCard
+              label="Cancelled visits"
+              value={summary.cancelled_appointments}
+              hint="Appointments cancelled by any user"
+              icon={<Activity className="h-5 w-5" aria-hidden="true" />}
+              tone="orange"
+              items={recentCancelled.map((appointment) => ({
+                id: appointment.appointment_id,
+                label: appointment.patient?.name ?? "Patient",
+                meta: formatDate(appointment.appointment_date),
+                to: `/admin/appointments/${appointment.appointment_id}`,
+              }))}
+              emptyText="No cancelled visits have been recorded."
+              to="/admin/appointments?status=Cancelled"
+              linkLabel="Open cancelled visits"
+            />
           </div>
 
           <div className="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
@@ -84,7 +179,11 @@ export function AdminDashboardPage() {
                 {summary.appointments_by_department.map((item, index) => {
                   const visual = departmentVisual(item.department_name);
                   return (
-                    <div key={item.department_name}>
+                    <Link
+                      key={item.department_name}
+                      to={`/admin/appointments?department_id=${item.department_id}`}
+                      className="group block rounded-xl px-2 py-1.5 transition hover:bg-brand-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300"
+                    >
                       <div className="flex items-center justify-between gap-3 text-sm">
                         <span className="flex min-w-0 items-center gap-2 font-medium text-ink">
                           <img src={visual.image} alt="" className="h-6 w-6 rounded-lg" />
@@ -98,7 +197,7 @@ export function AdminDashboardPage() {
                           style={{ width: `${Math.max(4, (item.appointment_count / maxDepartment) * 100)}%` }}
                         />
                       </div>
-                    </div>
+                    </Link>
                   );
                 })}
               </div>
@@ -116,23 +215,27 @@ export function AdminDashboardPage() {
               </div>
               <div className="mt-5 grid grid-cols-2 gap-2.5">
                 {statusOrder.map((status) => (
-                  <div key={status} className={`rounded-xl border px-3 py-2.5 ${statusTone(status)}`}>
+                  <Link
+                    key={status}
+                    to={`/admin/appointments?status=${encodeURIComponent(status)}`}
+                    className={`rounded-xl border px-3 py-2.5 transition hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 ${statusTone(status)}`}
+                  >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs font-semibold">{status}</span>
                       <span className="font-display text-xl font-semibold">{summary.status_counts[status] ?? 0}</span>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3 border-t border-line pt-4">
-                <div className="rounded-xl bg-emerald-50 px-3 py-2.5">
+                <Link to="/admin/appointments?status=Completed" className="rounded-xl bg-emerald-50 px-3 py-2.5 transition hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">
                   <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Completed</p>
                   <p className="mt-1 font-display text-2xl font-semibold text-emerald-900">{summary.completed_appointments}</p>
-                </div>
-                <div className="rounded-xl bg-rose-50 px-3 py-2.5">
+                </Link>
+                <Link to="/admin/appointments?status=Cancelled" className="rounded-xl bg-rose-50 px-3 py-2.5 transition hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300">
                   <p className="text-xs font-semibold uppercase tracking-wide text-rose-700">Cancelled</p>
                   <p className="mt-1 font-display text-2xl font-semibold text-rose-900">{summary.cancelled_appointments}</p>
-                </div>
+                </Link>
               </div>
             </section>
           </div>

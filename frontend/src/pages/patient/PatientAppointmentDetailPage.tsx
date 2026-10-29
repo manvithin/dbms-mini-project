@@ -83,6 +83,7 @@ export function PatientAppointmentDetailPage() {
         Back to my appointments
       </Link>
       <PageHeader
+        showBack={false}
         eyebrow={`Appointment #${appointment.appointment_id}`}
         title="Visit details"
         description="Everything about this appointment, including the clinical record when it is ready."

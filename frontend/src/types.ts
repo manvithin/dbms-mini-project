@@ -167,6 +167,28 @@ export interface Pagination {
   has_prev: boolean;
 }
 
+export interface PendingTestPreview {
+  test_id: number;
+  test_type: string;
+  status: string;
+  order_date: string;
+  appointment_id: number;
+  appointment_date: string;
+  appointment_time: string;
+  patient: Patient | null;
+  doctor: Doctor | null;
+}
+
+export interface PatientPreview {
+  patient_id: number;
+  name: string;
+  phone: string;
+  blood_group: string;
+  date_of_birth?: string | null;
+  gender?: string;
+  last_appointment_date?: string | null;
+}
+
 export interface AdminSummary {
   patients: number;
   doctors: number;
@@ -178,7 +200,17 @@ export interface AdminSummary {
   completed_appointments: number;
   today_status_counts: Record<string, number>;
   status_counts: Record<string, number>;
-  appointments_by_department: { department_name: string; appointment_count: number }[];
+  appointments_by_department: {
+    department_id: number;
+    department_name: string;
+    appointment_count: number;
+  }[];
+  today_appointments: Appointment[];
+  recent_completed_appointments: Appointment[];
+  recent_cancelled_appointments: Appointment[];
+  pending_test_orders: PendingTestPreview[];
+  recent_patients: PatientPreview[];
+  active_doctor_preview: Doctor[];
 }
 
 export interface DoctorSummary {
@@ -190,6 +222,8 @@ export interface DoctorSummary {
   upcoming_total: number;
   pending_tests: number;
   distinct_patients: number;
+  recent_patients: PatientPreview[];
+  pending_test_orders: PendingTestPreview[];
 }
 
 export interface DoctorDetailResponse {

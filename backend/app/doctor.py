@@ -12,6 +12,7 @@ from .models import (
     Appointment,
     Diagnosis,
     Doctor,
+    Patient,
     Prescription,
     Test_Order,
 )
@@ -19,6 +20,7 @@ from .serializers import (
     serialize_appointment,
     serialize_appointment_detail,
     serialize_diagnosis,
+    serialize_pending_test,
     serialize_prescription,
     serialize_test_order,
 )
@@ -123,10 +125,38 @@ def summary():
         .filter(Appointment.doctor_id == user.doctor_id, Test_Order.status == "Ordered")
         .count()
     )
+    pending_test_orders = (
+        Test_Order.query.options(
+            joinedload(Test_Order.appointment).joinedload(Appointment.patient),
+            joinedload(Test_Order.appointment)
+            .joinedload(Appointment.doctor)
+            .joinedload(Doctor.department),
+        )
+        .join(Appointment)
+        .filter(Appointment.doctor_id == user.doctor_id, Test_Order.status == "Ordered")
+        .order_by(Test_Order.order_date.desc())
+        .limit(4)
+        .all()
+    )
     distinct_patients = (
         db.session.query(func.count(func.distinct(Appointment.patient_id)))
         .filter(Appointment.doctor_id == user.doctor_id)
         .scalar()
+    )
+    recent_patient_rows = (
+        db.session.query(
+            Patient.patient_id,
+            Patient.name,
+            Patient.phone,
+            Patient.blood_group,
+            func.max(Appointment.appointment_date).label("last_appointment_date"),
+        )
+        .join(Appointment, Appointment.patient_id == Patient.patient_id)
+        .filter(Appointment.doctor_id == user.doctor_id)
+        .group_by(Patient.patient_id, Patient.name, Patient.phone, Patient.blood_group)
+        .order_by(func.max(Appointment.appointment_date).desc())
+        .limit(4)
+        .all()
     )
 
     return jsonify(
@@ -142,6 +172,23 @@ def summary():
                 "upcoming_total": upcoming_query.count(),
                 "pending_tests": pending_tests,
                 "distinct_patients": distinct_patients or 0,
+                "recent_patients": [
+                    {
+                        "patient_id": row.patient_id,
+                        "name": row.name,
+                        "phone": row.phone,
+                        "blood_group": row.blood_group,
+                        "last_appointment_date": (
+                            row.last_appointment_date.isoformat()
+                            if row.last_appointment_date
+                            else None
+                        ),
+                    }
+                    for row in recent_patient_rows
+                ],
+                "pending_test_orders": [
+                    serialize_pending_test(item) for item in pending_test_orders
+                ],
             },
             "upcoming_appointments": [serialize_appointment(item) for item in upcoming],
         }

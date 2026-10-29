@@ -25,6 +25,8 @@ from .serializers import (
     serialize_appointment_detail,
     serialize_department,
     serialize_doctor,
+    serialize_patient_mini,
+    serialize_pending_test,
     serialize_schedule,
     serialize_time_off,
 )
@@ -84,7 +86,11 @@ def summary():
     )
     today_counts = {status: count for status, count in today_rows}
     department_rows = (
-        db.session.query(Department.department_name, func.count(Appointment.appointment_id))
+        db.session.query(
+            Department.department_id,
+            Department.department_name,
+            func.count(Appointment.appointment_id),
+        )
         .outerjoin(Doctor, Doctor.department_id == Department.department_id)
         .outerjoin(Appointment, Appointment.doctor_id == Doctor.doctor_id)
         .group_by(Department.department_id, Department.department_name)
@@ -102,6 +108,47 @@ def summary():
         .limit(8)
         .all()
     )
+    today_appointments = (
+        admin_appointment_query()
+        .filter(Appointment.appointment_date == today)
+        .order_by(Appointment.appointment_time)
+        .limit(6)
+        .all()
+    )
+    recent_completed = (
+        admin_appointment_query()
+        .filter(Appointment.status == "Completed")
+        .order_by(Appointment.appointment_date.desc(), Appointment.appointment_time.desc())
+        .limit(4)
+        .all()
+    )
+    recent_cancelled = (
+        admin_appointment_query()
+        .filter(Appointment.status == "Cancelled")
+        .order_by(Appointment.updated_at.desc())
+        .limit(4)
+        .all()
+    )
+    pending_test_orders = (
+        Test_Order.query.options(
+            joinedload(Test_Order.appointment).joinedload(Appointment.patient),
+            joinedload(Test_Order.appointment)
+            .joinedload(Appointment.doctor)
+            .joinedload(Doctor.department),
+        )
+        .filter(Test_Order.status == "Ordered")
+        .order_by(Test_Order.order_date.desc())
+        .limit(4)
+        .all()
+    )
+    recent_patients = Patient.query.order_by(Patient.patient_id.desc()).limit(4).all()
+    active_doctor_preview = (
+        Doctor.query.options(joinedload(Doctor.department))
+        .filter(Doctor.is_active.is_(True))
+        .order_by(Doctor.name)
+        .limit(4)
+        .all()
+    )
 
     return jsonify(
         {
@@ -117,8 +164,26 @@ def summary():
                 "today_status_counts": today_counts,
                 "status_counts": status_counts,
                 "appointments_by_department": [
-                    {"department_name": name, "appointment_count": count}
-                    for name, count in department_rows
+                    {
+                        "department_id": department_id,
+                        "department_name": name,
+                        "appointment_count": count,
+                    }
+                    for department_id, name, count in department_rows
+                ],
+                "today_appointments": [serialize_appointment(item) for item in today_appointments],
+                "recent_completed_appointments": [
+                    serialize_appointment(item) for item in recent_completed
+                ],
+                "recent_cancelled_appointments": [
+                    serialize_appointment(item) for item in recent_cancelled
+                ],
+                "pending_test_orders": [
+                    serialize_pending_test(item) for item in pending_test_orders
+                ],
+                "recent_patients": [serialize_patient_mini(item) for item in recent_patients],
+                "active_doctor_preview": [
+                    serialize_doctor(item) for item in active_doctor_preview
                 ],
             },
             "recent_appointments": [serialize_appointment(item) for item in recent],

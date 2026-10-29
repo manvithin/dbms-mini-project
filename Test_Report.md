@@ -4,7 +4,7 @@
 
 | Check | Command | Result | Recorded on |
 | --- | --- | --- | --- |
-| Backend test suite | `..\.venv\Scripts\python.exe -m pytest -q` | 41 passed in 78.26 seconds | 29 October 2026 |
+| Backend test suite | `..\.venv\Scripts\python.exe -m pytest -q` | 42 passed in 84.89 seconds | 29 October 2026 |
 | Frontend test suite | `npm test` | 23 passed across 7 files | 29 October 2026 |
 | Production build | `npm run build` | Passed | 29 October 2026 |
 | Database object check | `flask check-db` | Trigger present, procedure present | 29 October 2026 |
@@ -40,8 +40,8 @@ Command, from `backend`:
 Output:
 
 ```text
-.........................................                                [100%]
-41 passed in 78.26s (0:01:18)
+..........................................                               [100%]
+42 passed in 84.89s (0:01:24)
 ```
 
 ### 3.1 Authentication and access control
@@ -101,7 +101,8 @@ File: `backend/tests/test_admin_and_db.py`
 
 | Test | What it proves |
 | --- | --- |
-| `test_admin_summary_uses_joins_and_aggregates` | Dashboard summary uses joins and aggregates |
+| `test_admin_summary_uses_joins_and_aggregates` | Dashboard summary uses joins, aggregates, and live previews |
+| `test_doctor_summary_includes_live_patient_previews` | Doctor dashboard returns real patient previews and pending test orders |
 | `test_admin_can_create_department_and_duplicate_is_rejected` | Department create and unique name rule |
 | `test_admin_can_create_doctor_with_hashed_password` | Doctor create stores a hash |
 | `test_schedule_overlap_is_rejected` | Overlapping schedule rows are blocked |
@@ -126,7 +127,7 @@ Output:
 ```text
  Test Files  7 passed (7)
       Tests  23 passed (23)
-   Duration  5.02s
+   Duration  4.78s
 ```
 
 ### 4.1 Test files
@@ -263,7 +264,7 @@ The application was started with the real Flask API and MySQL database. The foll
 | Check | Result |
 | --- | --- |
 | Administrator sign in reaches the dashboard | Passed |
-| Dashboard metrics and colour cards render | Passed |
+| Dashboard metrics, live previews, and colour cards render | Passed |
 | Department create and edit work | Passed |
 | Duplicate department name is rejected | Passed |
 | Doctor create with account works | Passed |
@@ -287,6 +288,26 @@ The application was started with the real Flask API and MySQL database. The foll
 | Patient cannot read another patient record through the API | Passed by automated test |
 | Doctor cannot read another doctor appointment through the API | Passed by automated test |
 
+### 7.6 Navigation and live dashboard cards
+
+These checks were run with a Playwright script against the running application and the seeded MySQL data.
+
+| Check | Result |
+| --- | --- |
+| Back button appears on the public home page, login page, and mobile home page | Passed |
+| Back button appears on the patient, doctor, and administrator screenshots | Passed |
+| Doctor detail page keeps a contextual back link | Passed |
+| Print layout shows a back control | Passed |
+| Login back button returns to the public home page | Passed |
+| Patient overview cards open the appointment list and record list | Passed |
+| Doctor card previews open an appointment record | Passed |
+| Administrator patient preview opens the filtered appointment register | Passed |
+| Administrator department row opens the filtered appointment register | Passed |
+| Administrator status tile opens the completed appointment register | Passed |
+| Doctor, patient, and administrator detail back links return to their lists | Passed |
+| Dashboard cards list real patient names instead of only totals | Passed |
+| Empty preview areas show a clear message | Passed |
+
 ## 8. Screenshot evidence
 
 The following final screenshots are stored in `screenshots/`:
@@ -301,7 +322,7 @@ The following final screenshots are stored in `screenshots/`:
 | `06-print-record.png` | Printed clinical record |
 | `07-doctor-dashboard.png` | Doctor dashboard |
 | `08-consultation.png` | Consultation workspace |
-| `09-admin-dashboard.png` | Administrator dashboard |
+| `09-admin-dashboard.png` | Administrator dashboard with live count cards and previews |
 | `10-mobile-home.png` | Mobile home page |
 | `11-doctor-detail.png` | Doctor detail with open slots |
 

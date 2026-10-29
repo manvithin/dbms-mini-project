@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import {
+  ArrowRight,
   CalendarCheck2,
   CalendarDays,
   ClipboardList,
@@ -10,7 +11,7 @@ import {
 } from "lucide-react";
 import { useApi } from "../../hooks/useApi";
 import { useAuth } from "../../auth/AuthContext";
-import type { AppointmentListResponse, DoctorSummaryResponse } from "../../types";
+import type { Appointment, AppointmentListResponse, DoctorSummaryResponse } from "../../types";
 import { AppointmentCard } from "../../components/AppointmentCard";
 import { Alert } from "../../components/Alert";
 import { Avatar } from "../../components/Avatar";
@@ -23,6 +24,15 @@ import { CardSkeleton, ListSkeleton } from "../../components/Skeleton";
 import { StatusBadge } from "../../components/StatusBadge";
 import { formatDate, formatDateLong, formatTime, todayISO } from "../../utils/format";
 
+function appointmentPreviews(appointments: Appointment[]) {
+  return appointments.slice(0, 3).map((appointment) => ({
+    id: appointment.appointment_id,
+    label: appointment.patient?.name ?? "Patient",
+    meta: `${formatTime(appointment.appointment_time)} | ${appointment.status}`,
+    to: `/doctor/appointments/${appointment.appointment_id}`,
+  }));
+}
+
 export function DoctorDashboardPage() {
   const { user } = useAuth();
   const summaryState = useApi<DoctorSummaryResponse>("/doctor/summary");
@@ -30,6 +40,11 @@ export function DoctorDashboardPage() {
   const summary = summaryState.data?.summary;
   const upcoming = summaryState.data?.upcoming_appointments ?? [];
   const todayAppointments = todayState.data?.appointments ?? [];
+  const waiting = todayAppointments.filter((appointment) => ["Booked", "Confirmed", "Checked In"].includes(appointment.status));
+  const inConsultation = todayAppointments.filter((appointment) => appointment.status === "In Consultation");
+  const completedToday = todayAppointments.filter((appointment) => appointment.status === "Completed");
+  const pendingTests = summary?.pending_test_orders ?? [];
+  const recentPatients = summary?.recent_patients ?? [];
   const loading = summaryState.loading || todayState.loading;
   const error = summaryState.error || todayState.error;
 
@@ -72,10 +87,49 @@ export function DoctorDashboardPage() {
         </div>
       ) : summary ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Today's appointments" value={summary.today_total} hint="All visits assigned to you today" icon={<CalendarCheck2 className="h-5 w-5" aria-hidden="true" />} />
-          <StatCard label="Waiting for you" value={summary.today_waiting} hint="Booked, confirmed, or checked in" icon={<Clock3 className="h-5 w-5" aria-hidden="true" />} tone="gold" />
-          <StatCard label="In consultation" value={summary.today_in_consultation} hint="Currently with you" icon={<Stethoscope className="h-5 w-5" aria-hidden="true" />} tone="violet" />
-          <StatCard label="Completed today" value={summary.today_completed} hint="Visits with a finished consultation" icon={<ClipboardList className="h-5 w-5" aria-hidden="true" />} tone="emerald" />
+          <StatCard
+            label="Today's appointments"
+            value={summary.today_total}
+            hint="All visits assigned to you today"
+            icon={<CalendarCheck2 className="h-5 w-5" aria-hidden="true" />}
+            items={appointmentPreviews(todayAppointments)}
+            emptyText="No appointments are assigned to you today."
+            to="/doctor/appointments?scope=today"
+            linkLabel="Open today's list"
+          />
+          <StatCard
+            label="Waiting for you"
+            value={summary.today_waiting}
+            hint="Booked, confirmed, or checked in"
+            icon={<Clock3 className="h-5 w-5" aria-hidden="true" />}
+            tone="gold"
+            items={appointmentPreviews(waiting)}
+            emptyText="No patients are waiting right now."
+            to="/doctor/appointments?scope=today"
+            linkLabel="Open today's list"
+          />
+          <StatCard
+            label="In consultation"
+            value={summary.today_in_consultation}
+            hint="Currently with you"
+            icon={<Stethoscope className="h-5 w-5" aria-hidden="true" />}
+            tone="violet"
+            items={appointmentPreviews(inConsultation)}
+            emptyText="No consultation is in progress."
+            to="/doctor/appointments?scope=today&status=In%20Consultation"
+            linkLabel="Open consultations"
+          />
+          <StatCard
+            label="Completed today"
+            value={summary.today_completed}
+            hint="Visits with a finished consultation"
+            icon={<ClipboardList className="h-5 w-5" aria-hidden="true" />}
+            tone="emerald"
+            items={appointmentPreviews(completedToday)}
+            emptyText="No visits have been completed today."
+            to="/doctor/appointments?scope=today&status=Completed"
+            linkLabel="Open completed visits"
+          />
         </div>
       ) : null}
 
@@ -125,6 +179,25 @@ export function DoctorDashboardPage() {
             </div>
             <p className="relative mt-4 font-display text-4xl font-semibold text-amber-900">{summary?.pending_tests ?? 0}</p>
             <p className="relative mt-1 text-xs leading-5 text-muted">Test orders across your patients that still need a result.</p>
+            {pendingTests.length === 0 ? (
+              <p className="relative mt-3 rounded-lg border border-dashed border-amber-200 bg-white/70 px-3 py-2 text-xs leading-5 text-muted">
+                No test orders are waiting for a result.
+              </p>
+            ) : (
+              <ul className="relative mt-3 space-y-1 border-t border-amber-100 pt-3">
+                {pendingTests.map((test) => (
+                  <li key={test.test_id}>
+                    <Link
+                      to={`/doctor/appointments/${test.appointment_id}`}
+                      className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-xs transition hover:bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                    >
+                      <span className="min-w-0 truncate font-semibold text-ink">{test.patient?.name ?? "Patient"}</span>
+                      <span className="shrink-0 text-[11px] font-medium text-muted">{test.test_type}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
             <Link to="/doctor/appointments?scope=upcoming" className="relative mt-4 inline-flex items-center gap-1 text-sm font-semibold text-amber-800 hover:text-amber-950">
               Review upcoming visits
             </Link>
@@ -171,6 +244,24 @@ export function DoctorDashboardPage() {
             <h2 className="relative mt-3 font-display text-xl font-semibold">Patients under your care</h2>
             <p className="relative mt-2 font-display text-4xl font-semibold">{summary?.distinct_patients ?? 0}</p>
             <p className="relative mt-1 text-sm leading-6 text-brand-100">Distinct patients with an appointment in your list.</p>
+            {recentPatients.length === 0 ? (
+              <p className="relative mt-3 rounded-lg border border-dashed border-white/20 px-3 py-2 text-xs leading-5 text-brand-100">
+                No patient records are linked to your appointments yet.
+              </p>
+            ) : (
+              <ul className="relative mt-3 space-y-2 border-t border-white/15 pt-3">
+                {recentPatients.map((patient) => (
+                  <li key={patient.patient_id} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="min-w-0 truncate font-semibold text-white">{patient.name}</span>
+                    <span className="shrink-0 text-brand-200">{patient.blood_group}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Link to="/doctor/appointments?scope=all" className="relative mt-3 inline-flex items-center gap-1 text-xs font-semibold text-brand-100 hover:text-white">
+              Open all patient appointments
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
             <p className="relative mt-3 text-xs leading-5 text-brand-200">Access is limited to appointments assigned to you.</p>
           </section>
         </div>
