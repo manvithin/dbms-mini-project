@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-labelledby="title">
+  <title id="title">Illustrated portrait of Dr. Kabir Singh</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff7e8"/>
+      <stop offset="1" stop-color="#fde3ad"/>
+    </linearGradient>
+    <linearGradient id="coat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f6f1e8"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#bg)"/>
+  <circle cx="332" cy="74" r="80" fill="#ffffff" opacity="0.42"/>
+  <circle cx="54" cy="332" r="98" fill="#ffffff" opacity="0.24"/>
+  <circle cx="352" cy="328" r="44" fill="#b45309" opacity="0.1"/>
+  <rect x="180" y="226" width="40" height="70" rx="20" fill="#965d3d"/>
+  <path d="M140 400v-96c0-18 20-30 60-30s60 12 60 30v96z" fill="#b45309"/>
+  <path d="M64 400c8-74 52-116 104-124l32 62 32-62c52 8 96 50 104 124z" fill="url(#coat)" stroke="#e7ded0" stroke-width="3"/>
+  <path d="M168 276l32 62-52 62-24-6c10-50 24-92 44-118z" fill="#ffffff" opacity="0.5"/>
+  <ellipse cx="200" cy="164" rx="67" ry="80" fill="#b37852"/>
+  <circle cx="134" cy="172" r="12" fill="#a26543"/>
+  <circle cx="266" cy="172" r="12" fill="#a26543"/>
+  <path d="M148 186c0 52 18 80 52 80s52-28 52-80c-8 18-20 28-34 32-10 3-18 4-18 4s-8-1-18-4c-14-4-26-14-34-32z" fill="#2b211c"/>
+  <path d="M118 160c-8-70 28-108 82-108s90 38 82 108c0-14-12-26-32-30-20-4-36 10-50 10s-30-14-50-10c-20 4-32 16-32 30z" fill="#1e3a8a"/>
+  <path d="M150 86c18-16 42-24 70-22" stroke="#4263b8" stroke-width="9" fill="none" stroke-linecap="round" opacity="0.6"/>
+  <path d="M124 138c22 12 50 18 76 18s54-6 76-18" stroke="#172554" stroke-width="11" fill="none" stroke-linecap="round"/>
+  <circle cx="200" cy="100" r="7" fill="#f0b46a"/>
+  <ellipse cx="176" cy="166" rx="5" ry="6" fill="#231f1c"/>
+  <ellipse cx="224" cy="166" rx="5" ry="6" fill="#231f1c"/>
+  <circle cx="177.5" cy="164" r="1.6" fill="#ffffff" opacity="0.8"/>
+  <circle cx="225.5" cy="164" r="1.6" fill="#ffffff" opacity="0.8"/>
+  <path d="M160 148q16-8 32-2" stroke="#2b211c" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M208 146q16-6 32 2" stroke="#2b211c" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M199 172q-5 18 2 23 5 3 10-2" stroke="#965d3d" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M182 212q18 12 36 0" stroke="#6f3a33" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M172 202q28-10 56 0" stroke="#2b211c" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M158 292c0 44 18 64 42 64s42-20 42-64" stroke="#78350f" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <circle cx="158" cy="290" r="7" fill="#78350f"/>
+  <circle cx="242" cy="290" r="7" fill="#78350f"/>
+  <path d="M200 356c14 0 28 4 36 12" stroke="#78350f" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <circle cx="240" cy="370" r="11" fill="#fcd34d" stroke="#78350f" stroke-width="5"/>
+  <rect x="252" y="326" width="56" height="30" rx="8" fill="#ffffff" stroke="#e5d7c4"/>
+  <rect x="252" y="326" width="8" height="30" rx="4" fill="#b45309"/>
+  <path d="M268 336h28M268 344h20" stroke="#b6a58e" stroke-width="3" stroke-linecap="round"/>
+</svg>

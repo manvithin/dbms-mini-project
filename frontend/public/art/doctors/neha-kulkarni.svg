@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-labelledby="title">
+  <title id="title">Illustrated portrait of Dr. Neha Kulkarni</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f4f0ff"/>
+      <stop offset="1" stop-color="#d8ccfb"/>
+    </linearGradient>
+    <linearGradient id="coat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f0edf8"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#bg)"/>
+  <circle cx="332" cy="72" r="80" fill="#ffffff" opacity="0.42"/>
+  <circle cx="54" cy="330" r="98" fill="#ffffff" opacity="0.24"/>
+  <circle cx="354" cy="328" r="44" fill="#7c3aed" opacity="0.1"/>
+  <path d="M124 168c0-64 32-102 76-102s76 38 76 102v54c0 28-14 46-30 52l-6-48c-2-26-16-42-40-42s-38 16-40 42l-6 48c-16-6-30-24-30-52z" fill="#2f211b"/>
+  <rect x="180" y="226" width="40" height="70" rx="20" fill="#dda578"/>
+  <path d="M140 400v-96c0-18 20-30 60-30s60 12 60 30v96z" fill="#7c3aed"/>
+  <path d="M64 400c8-74 52-116 104-124l32 62 32-62c52 8 96 50 104 124z" fill="url(#coat)" stroke="#e2ddeb" stroke-width="3"/>
+  <path d="M168 276l32 62-52 62-24-6c10-50 24-92 44-118z" fill="#ffffff" opacity="0.5"/>
+  <ellipse cx="200" cy="164" rx="67" ry="80" fill="#e0ac7e"/>
+  <circle cx="134" cy="172" r="12" fill="#cf9a6c"/>
+  <circle cx="266" cy="172" r="12" fill="#cf9a6c"/>
+  <path d="M133 158c-2-58 28-94 67-94 40 0 70 36 67 94-8-28-24-46-42-50-8 18-24 28-44 30-18 2-32-2-40-12-4 12-6 22-8 32z" fill="#2f211b"/>
+  <path d="M128 148c-6 48-2 96 10 122 4-36 2-92 8-122z" fill="#2f211b"/>
+  <path d="M272 148c6 48 2 96-10 122-4-36-2-92-8-122z" fill="#2f211b"/>
+  <ellipse cx="176" cy="166" rx="5" ry="6" fill="#2f211b"/>
+  <ellipse cx="224" cy="166" rx="5" ry="6" fill="#2f211b"/>
+  <circle cx="177.5" cy="164" r="1.6" fill="#ffffff" opacity="0.85"/>
+  <circle cx="225.5" cy="164" r="1.6" fill="#ffffff" opacity="0.85"/>
+  <path d="M160 148q16-8 32-2" stroke="#2f211b" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M208 146q16-6 32 2" stroke="#2f211b" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M199 172q-5 18 2 23 5 3 10-2" stroke="#cf9a6c" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M180 208q20 14 40 0" stroke="#8f4d43" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <rect x="148" y="152" width="46" height="32" rx="10" fill="none" stroke="#3b2b24" stroke-width="4" opacity="0.85"/>
+  <rect x="206" y="152" width="46" height="32" rx="10" fill="none" stroke="#3b2b24" stroke-width="4" opacity="0.85"/>
+  <path d="M194 166h12" stroke="#3b2b24" stroke-width="4" opacity="0.85"/>
+  <circle cx="134" cy="188" r="5" fill="#c4b5fd"/>
+  <circle cx="266" cy="188" r="5" fill="#c4b5fd"/>
+  <path d="M158 292c0 44 18 64 42 64s42-20 42-64" stroke="#4c1d95" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <circle cx="158" cy="290" r="7" fill="#4c1d95"/>
+  <circle cx="242" cy="290" r="7" fill="#4c1d95"/>
+  <path d="M200 356c14 0 28 4 36 12" stroke="#4c1d95" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <circle cx="240" cy="370" r="11" fill="#c4b5fd" stroke="#4c1d95" stroke-width="5"/>
+  <rect x="252" y="326" width="56" height="30" rx="8" fill="#ffffff" stroke="#ded7ec"/>
+  <rect x="252" y="326" width="8" height="30" rx="4" fill="#7c3aed"/>
+  <path d="M268 336h28M268 344h20" stroke="#ada2c4" stroke-width="3" stroke-linecap="round"/>
+</svg>

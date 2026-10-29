@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title">
+  <title id="title">General Medicine department artwork</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4da99d"/>
+      <stop offset="1" stop-color="#1b5a53"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="30" fill="url(#bg)"/>
+  <circle cx="98" cy="24" r="26" fill="#ffffff" opacity="0.14"/>
+  <path d="M38 32v22c0 14 9 22 22 22s22-8 22-22V32" stroke="#ffffff" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M38 32h-6M82 32h6" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  <path d="M60 76v8c0 9 6 14 14 14 7 0 12-4 13-10" stroke="#ffffff" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <circle cx="89" cy="82" r="9" fill="#ffffff"/>
+  <circle cx="89" cy="82" r="4" fill="#2f8d80"/>
+</svg>

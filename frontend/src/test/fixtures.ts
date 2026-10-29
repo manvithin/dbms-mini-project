@@ -1,0 +1,70 @@
+import type { Appointment, AppointmentStatus } from "../types";
+
+export function makeAppointment(overrides: Partial<Appointment> = {}): Appointment {
+  return {
+    appointment_id: 101,
+    patient_id: 1,
+    doctor_id: 1,
+    appointment_date: "2026-10-29",
+    appointment_time: "09:30",
+    status: "Completed" as AppointmentStatus,
+    reason_for_visit: "Persistent cough for one week.",
+    created_at: "2026-10-20T04:30:00Z",
+    updated_at: "2026-10-29T05:00:00Z",
+    patient: {
+      patient_id: 1,
+      name: "Riya Kapoor",
+      date_of_birth: "1992-05-14",
+      gender: "Female",
+      phone: "+91 90000 20001",
+      address: "12 Lake View Road, Bengaluru",
+      blood_group: "B positive",
+      medical_history: "Mild seasonal allergies.",
+    },
+    doctor: {
+      doctor_id: 1,
+      name: "Dr. Asha Rao",
+      specialization: "Internal Medicine",
+      phone: "+91 90000 10001",
+      department_id: 1,
+      department_name: "General Medicine",
+      is_active: true,
+    },
+    test_count: 1,
+    has_diagnosis: true,
+    has_prescription: true,
+    tests: [
+      {
+        test_id: 1,
+        appointment_id: 101,
+        test_type: "Chest X ray",
+        order_date: "2026-10-29T04:40:00Z",
+        status: "Completed",
+        notes: "Check for lower respiratory infection.",
+        result: {
+          result_id: 1,
+          test_id: 1,
+          result_date: "2026-10-29T06:00:00Z",
+          result_summary: "No focal consolidation seen in either lung field.",
+          remarks: "Correlate with clinical findings.",
+        },
+      },
+    ],
+    diagnosis: {
+      diagnosis_id: 1,
+      appointment_id: 101,
+      diagnosis_description: "Acute bronchitis.",
+      diagnosis_date: "2026-10-29T05:30:00Z",
+      notes: "Chest examination clear.",
+      prescription: {
+        prescription_id: 1,
+        diagnosis_id: 1,
+        treatment_plan: "Rest, fluids, and cough relief medicine.",
+        instructions: "Return if fever lasts more than three days.",
+        follow_up_date: "2026-11-05",
+      },
+    },
+    status_history: [],
+    ...overrides,
+  };
+}

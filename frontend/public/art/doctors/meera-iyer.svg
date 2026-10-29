@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-labelledby="title">
+  <title id="title">Illustrated portrait of Dr. Meera Iyer</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8f7f3"/>
+      <stop offset="1" stop-color="#b9e3da"/>
+    </linearGradient>
+    <linearGradient id="coat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#eef3f4"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#bg)"/>
+  <circle cx="330" cy="70" r="82" fill="#ffffff" opacity="0.38"/>
+  <circle cx="58" cy="332" r="96" fill="#ffffff" opacity="0.22"/>
+  <circle cx="352" cy="330" r="42" fill="#2f8d80" opacity="0.12"/>
+  <circle cx="200" cy="72" r="34" fill="#2a211c"/>
+  <path d="M126 176c0-66 30-106 74-106s74 40 74 106v34c0 24-14 40-28 44l-8-48c-4-24-18-40-38-40s-34 16-38 40l-8 48c-14-4-28-20-28-44z" fill="#2a211c"/>
+  <rect x="180" y="226" width="40" height="70" rx="20" fill="#b9764f"/>
+  <path d="M140 400v-96c0-18 20-30 60-30s60 12 60 30v96z" fill="#1f7167"/>
+  <path d="M64 400c8-74 52-116 104-124l32 62 32-62c52 8 96 50 104 124z" fill="url(#coat)" stroke="#dde7e8" stroke-width="3"/>
+  <path d="M168 276l32 62-52 62-24-6c10-50 24-92 44-118z" fill="#ffffff" opacity="0.5"/>
+  <ellipse cx="200" cy="164" rx="67" ry="80" fill="#d99a72"/>
+  <circle cx="134" cy="172" r="12" fill="#c98a63"/>
+  <circle cx="266" cy="172" r="12" fill="#c98a63"/>
+  <path d="M133 158c-2-58 28-94 67-94 40 0 70 36 67 94-8-28-24-46-42-50-8 18-24 28-44 30-18 2-32-2-40-12-4 12-6 22-8 32z" fill="#2a211c"/>
+  <ellipse cx="176" cy="166" rx="5" ry="6" fill="#2a211c"/>
+  <ellipse cx="224" cy="166" rx="5" ry="6" fill="#2a211c"/>
+  <circle cx="177.5" cy="164" r="1.6" fill="#ffffff" opacity="0.8"/>
+  <circle cx="225.5" cy="164" r="1.6" fill="#ffffff" opacity="0.8"/>
+  <path d="M160 148q16-8 32-2" stroke="#3b2b24" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M208 146q16-6 32 2" stroke="#3b2b24" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M199 172q-5 18 2 23 5 3 10-2" stroke="#b9764f" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M180 208q20 14 40 0" stroke="#8f4d43" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <circle cx="200" cy="138" r="3.2" fill="#a33a3a"/>
+  <circle cx="134" cy="188" r="5" fill="#c9a24a"/>
+  <circle cx="266" cy="188" r="5" fill="#c9a24a"/>
+  <path d="M158 292c0 44 18 64 42 64s42-20 42-64" stroke="#173d39" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <circle cx="158" cy="290" r="7" fill="#173d39"/>
+  <circle cx="242" cy="290" r="7" fill="#173d39"/>
+  <path d="M200 356c14 0 28 4 36 12" stroke="#173d39" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <circle cx="240" cy="370" r="11" fill="#c9a24a" stroke="#173d39" stroke-width="5"/>
+  <rect x="252" y="326" width="56" height="30" rx="8" fill="#ffffff" stroke="#d7e1e3"/>
+  <rect x="252" y="326" width="8" height="30" rx="4" fill="#1f7167"/>
+  <path d="M268 336h28M268 344h20" stroke="#9fb2b4" stroke-width="3" stroke-linecap="round"/>
+</svg>

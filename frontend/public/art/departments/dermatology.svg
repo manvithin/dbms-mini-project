@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title">
+  <title id="title">Dermatology department artwork</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#5b21b6"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="30" fill="url(#bg)"/>
+  <circle cx="98" cy="24" r="26" fill="#ffffff" opacity="0.16"/>
+  <path d="M60 30c-12 18-20 30-20 41 0 12 9 21 20 21s20-9 20-21c0-11-8-23-20-41z" fill="#ffffff"/>
+  <path d="M60 48v26" stroke="#7c3aed" stroke-width="4" stroke-linecap="round"/>
+  <path d="M52 62c3 8 5 12 8 12s5-4 8-12" stroke="#7c3aed" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M30 30l2 6 6 2-6 2-2 6-2-6-6-2 6-2zM88 82l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" fill="#ffffff" opacity="0.85"/>
+</svg>

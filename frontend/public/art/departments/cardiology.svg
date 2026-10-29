@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title">
+  <title id="title">Cardiology department artwork</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fb7185"/>
+      <stop offset="1" stop-color="#be123c"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="30" fill="url(#bg)"/>
+  <circle cx="98" cy="24" r="26" fill="#ffffff" opacity="0.14"/>
+  <path d="M60 92c-20-14-32-27-32-41 0-11 8-19 19-19 6 0 11 3 13 8 2-5 7-8 13-8 11 0 19 8 19 19 0 14-12 27-32 41z" fill="#ffffff"/>
+  <path d="M36 55h12l5-10 7 22 6-12h18" stroke="#be123c" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
