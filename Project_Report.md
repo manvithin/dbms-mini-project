@@ -296,7 +296,7 @@ Key screens:
 * Administrator dashboard with colour coded metrics, live patient and test previews, and links into the appointment register.
 * Print layouts for confirmation, record, tests, and history.
 
-Every page has a back control. Signed in pages use the shared page header button, public pages use the public layout button, and detail pages keep a contextual link back to their list. The print layout provides its own back button.
+The public home page, sign in page, registration page, and the three role landing pages do not show a back control. Subpages use the shared page header button on signed in pages, the public layout button on public subpages, or a contextual link back to their parent list. The print layout provides its own back button.
 
 The dashboard cards are data driven. Administrator and doctor cards list real patient names and link to filtered appointment lists or individual records. Patient cards show the next visit and the latest clinical record. Empty cards explain that no matching records exist.
 
@@ -331,7 +331,7 @@ The following workflows were checked in a real browser against the running appli
 * Doctor sign in, dashboard, appointment status updates, test order, result, diagnosis, prescription, and print views.
 * Administrator sign in, dashboard, department creation, doctor creation, schedule management, time off, appointment filtering, and cancellation.
 * Role isolation between patient, doctor, and administrator routes.
-* Back navigation on public, signed in, detail, and print pages.
+* Back navigation hidden on the public home, sign in, registration, and role landing pages, and present on subpages, detail pages, and print pages.
 * Live dashboard cards with real patient previews and links to filtered lists or records.
 * Empty, loading, success, validation, and failure states.
 

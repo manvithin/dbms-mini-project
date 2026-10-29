@@ -294,11 +294,13 @@ These checks were run with a Playwright script against the running application a
 
 | Check | Result |
 | --- | --- |
-| Back button appears on the public home page, login page, and mobile home page | Passed |
-| Back button appears on the patient, doctor, and administrator screenshots | Passed |
+| Public home page, login page, and mobile home page show no back button | Passed |
+| Registration page shows no back button | Passed |
+| Patient, doctor, and administrator landing pages show no back button | Passed |
+| Signed in subpages show the shared page header back button | Passed |
 | Doctor detail page keeps a contextual back link | Passed |
 | Print layout shows a back control | Passed |
-| Login back button returns to the public home page | Passed |
+| Back controls return to the parent page or role landing page | Passed |
 | Patient overview cards open the appointment list and record list | Passed |
 | Doctor card previews open an appointment record | Passed |
 | Administrator patient preview opens the filtered appointment register | Passed |

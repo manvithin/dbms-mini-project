@@ -43,6 +43,7 @@ export function AdminDashboardPage() {
         eyebrow="Administration"
         title="Hospital operations overview"
         description="Live counts and recent activity across outpatient care."
+        showBack={false}
         actions={
           <>
             <LinkButton to="/admin/doctors" variant="secondary" icon={<Stethoscope className="h-4 w-4" aria-hidden="true" />}>Manage doctors</LinkButton>

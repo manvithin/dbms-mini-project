@@ -350,7 +350,7 @@ This removes repeated request boilerplate from pages.
 | --- | --- |
 | `Button` | Variants, loading state, disabled state |
 | `BackButton` | History aware back navigation with a role home or public home fallback |
-| `PageHeader` | Page title, description, actions, and the shared back button |
+| `PageHeader` | Page title, description, actions, and the shared back button, which landing pages disable |
 | `Card` | Consistent surface and spacing |
 | `Form` | Labels, fields, errors, layout |
 | `Modal` | Accessible dialog with Escape and focus handling |
@@ -372,7 +372,7 @@ This removes repeated request boilerplate from pages.
 
 | Layout | Use |
 | --- | --- |
-| `PublicLayout` | Top navigation, public back button, and footer |
+| `PublicLayout` | Top navigation, public back button on subpages, and footer |
 | `AppLayout` | Left sidebar and mobile drawer for signed in areas |
 | `PrintLayout` | Print header, back button, and print action |
 

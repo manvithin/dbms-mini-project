@@ -43,7 +43,7 @@ Doctors are hospital users with narrower clinical permissions than administrator
 
 ## Interface
 
-The public area uses a top navigation bar. The signed in areas use a left sidebar, and on small screens the menu button sits on the left beside the General Hospital logo. Every page has a back control. Signed in pages use the shared page header button, public pages use the public layout button, and detail pages keep a contextual link back to their list.
+The public area uses a top navigation bar. The signed in areas use a left sidebar, and on small screens the menu button sits on the left beside the General Hospital logo. The public home page, sign in page, registration page, and the three role landing pages do not show a back control. Subpages use the shared page header button on signed in pages, the public layout button on public subpages, or a contextual link back to their parent list. The print layout provides its own back button.
 
 Dashboard count cards are data driven. Each card shows the total, a short list of real patient or visit records, and a link to the matching filtered list or appointment record. Empty cards explain that no matching records exist.
 

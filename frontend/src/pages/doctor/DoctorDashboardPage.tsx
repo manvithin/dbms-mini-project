@@ -59,6 +59,7 @@ export function DoctorDashboardPage() {
         eyebrow={formatDateLong(todayISO())}
         title="Your clinic at a glance"
         description="Today's list, waiting patients, and clinical follow ups."
+        showBack={false}
         actions={
           <div className="flex items-center gap-3">
             <DoctorAvatar name={user?.name ?? "Doctor"} size="lg" />

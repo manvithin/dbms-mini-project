@@ -48,6 +48,7 @@ export function PatientOverviewPage() {
         eyebrow={formatDateLong(todayISO())}
         title={profile ? `Good day, ${profile.name.split(" ")[0]}` : "Your care overview"}
         description="Your next visit, recent clinical notes, and the fastest route to care."
+        showBack={false}
         actions={
           <LinkButton to="/patient/book" icon={<Plus className="h-4 w-4" aria-hidden="true" />}>
             Book appointment

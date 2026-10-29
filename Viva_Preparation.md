@@ -439,4 +439,4 @@ Public registration creates patients only. An administrator creates a doctor acc
 The administrator and doctor summary endpoints return totals together with small preview lists. The cards render those previews with real patient names, and each row links to a filtered list or the appointment record.
 
 **Q139. How is back navigation handled on every page?**
-A shared `BackButton` uses browser history when it exists and falls back to the role home or the public home page. The shared page header includes it on signed in pages, the public layout includes it on public pages, detail pages keep a contextual back link, and the print layout has its own back button.
+A shared `BackButton` uses browser history when it exists and falls back to the role home or the public home page. It is hidden on the public home page, sign in page, registration page, and the three role landing pages, so users do not leave a home page through a back control. Subpages show it through the shared page header or the public layout, detail pages keep a contextual back link, and the print layout has its own back button.

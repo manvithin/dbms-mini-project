@@ -12,6 +12,7 @@ export function PublicLayout() {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const showBack = !["/", "/login", "/register"].includes(location.pathname) && !location.pathname.startsWith("/doctors/");
 
   function closeMenu() {
     setOpen(false);
@@ -117,7 +118,7 @@ export function PublicLayout() {
         ) : null}
       </header>
       <main>
-        {!location.pathname.startsWith("/doctors/") ? (
+        {showBack ? (
           <div className="content-width pt-4">
             <BackButton fallbackTo="/" />
           </div>
