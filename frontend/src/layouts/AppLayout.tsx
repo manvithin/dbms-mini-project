@@ -40,6 +40,7 @@ const navigation: Record<string, NavItem[]> = {
   doctor: [
     { to: "/doctor", label: "Today at a glance", icon: LayoutDashboard, end: true },
     { to: "/doctor/appointments", label: "Appointments", icon: CalendarDays },
+    { to: "/doctor/profile", label: "My profile", icon: UserRound },
   ],
   admin: [
     { to: "/admin", label: "Overview", icon: LayoutDashboard, end: true },
@@ -48,6 +49,7 @@ const navigation: Record<string, NavItem[]> = {
     { to: "/admin/schedules", label: "Schedules", icon: Clock3 },
     { to: "/admin/time-off", label: "Time off", icon: CalendarDays },
     { to: "/admin/appointments", label: "Appointments", icon: ClipboardList },
+    { to: "/admin/security", label: "Security", icon: ShieldCheck },
   ],
 };
 

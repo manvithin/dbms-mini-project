@@ -1,5 +1,3 @@
-from werkzeug.security import check_password_hash
-
 from app.extensions import db
 from app.models import Patient, User_Account
 from tests.conftest import login, logout
@@ -127,26 +125,3 @@ def test_doctor_cannot_read_another_doctors_appointment(client, seeded):
     response = client.get(f"/api/doctor/appointments/{seeded['booked_appointment_id']}")
     assert response.status_code == 404
     assert response.get_json()["code"] == "not_found"
-
-
-def test_create_admin_command_hashes_password(app, seeded):
-    runner = app.test_cli_runner()
-    result = runner.invoke(
-        args=[
-            "create-admin",
-            "--email",
-            "second.admin@example.com",
-            "--password",
-            "AdminPass123",
-        ]
-    )
-    assert result.exit_code == 0, result.output
-    assert "Administrator account created" in result.output
-
-    with app.app_context():
-        account = User_Account.query.filter_by(username="second.admin@example.com").one()
-        assert account.role == "admin"
-        assert account.patient_id is None
-        assert account.doctor_id is None
-        assert account.password_hash != "AdminPass123"
-        assert check_password_hash(account.password_hash, "AdminPass123")

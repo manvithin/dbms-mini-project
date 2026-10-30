@@ -37,6 +37,10 @@ def create_app(config_overrides=None):
 
     register_error_handlers(app)
 
+    from .auth import csrf_protect
+
+    app.before_request(csrf_protect)
+
     from .cli import register_cli
 
     register_cli(app)

@@ -22,7 +22,6 @@ from .models import (
 from .services.availability import hospital_now
 
 DEMO_ACCOUNTS = [
-    ("admin@cityhospital.example", "Admin@123", "Administrator"),
     ("meera.iyer@example.com", "Doctor@123", "Dr. Meera Iyer"),
     ("riya.kapoor@example.com", "Patient@123", "Riya Kapoor"),
 ]
@@ -40,6 +39,7 @@ TABLES_IN_DELETE_ORDER = (
     "doctor",
     "patient",
     "department",
+    "system_setting",
 )
 
 
@@ -283,14 +283,6 @@ def seed_demo_data(reset=False):
                 is_active=True,
             )
         )
-    db.session.add(
-        User_Account(
-            username="admin@cityhospital.example",
-            password_hash=password_hash("Admin@123"),
-            role="admin",
-            is_active=True,
-        )
-    )
     db.session.flush()
 
     today = hospital_now().date()

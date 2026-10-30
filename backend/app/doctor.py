@@ -20,6 +20,7 @@ from .serializers import (
     serialize_appointment,
     serialize_appointment_detail,
     serialize_diagnosis,
+    serialize_doctor,
     serialize_pending_test,
     serialize_prescription,
     serialize_test_order,
@@ -38,7 +39,9 @@ from .validation import (
     parse_date,
     parse_enum,
     parse_int,
+    reject_unexpected_fields,
     required_text,
+    validate_phone,
 )
 
 doctor_bp = Blueprint("doctor", __name__, url_prefix="/api/doctor")
@@ -91,6 +94,35 @@ def get_doctor_diagnosis(diagnosis_id, user):
     if diagnosis is None or diagnosis.appointment.doctor_id != user.doctor_id:
         raise ApiError("Diagnosis not found.", 404, "not_found")
     return diagnosis
+
+
+@doctor_bp.get("/profile")
+@role_required("doctor")
+def get_my_profile():
+    user = get_current_user()
+    if user.doctor is None:
+        raise ApiError("Doctor profile not found.", 404, "not_found")
+    return jsonify({"doctor": serialize_doctor(user.doctor, include_account=True)})
+
+
+@doctor_bp.patch("/profile")
+@role_required("doctor")
+def update_my_profile():
+    user = get_current_user()
+    if user.doctor is None:
+        raise ApiError("Doctor profile not found.", 404, "not_found")
+    data = json_body()
+    # Doctors may update contact details only. Administrative fields stay read only.
+    reject_unexpected_fields(data, {"phone"})
+    if "phone" in data:
+        user.doctor.phone = validate_phone(data.get("phone"))
+    db.session.commit()
+    return jsonify(
+        {
+            "message": "Contact details updated.",
+            "doctor": serialize_doctor(user.doctor, include_account=True),
+        }
+    )
 
 
 @doctor_bp.get("/summary")

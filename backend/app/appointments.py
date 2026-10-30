@@ -39,6 +39,7 @@ from .validation import (
     parse_enum,
     parse_int,
     parse_time,
+    reject_forbidden_fields,
     required_text,
 )
 
@@ -110,6 +111,23 @@ def update_my_profile():
         raise ApiError("Patient profile not found.", 404, "not_found")
 
     data = json_body()
+    reject_forbidden_fields(
+        data,
+        {
+            "role",
+            "user_id",
+            "patient_id",
+            "doctor_id",
+            "is_active",
+            "username",
+            "email",
+            "password",
+            "password_hash",
+            "account",
+            "doctor",
+            "patient",
+        },
+    )
     if "name" in data:
         from .validation import validate_name
 

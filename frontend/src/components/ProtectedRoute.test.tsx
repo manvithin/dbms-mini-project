@@ -56,6 +56,7 @@ describe("ProtectedRoute", () => {
       loading: true,
       login: vi.fn(),
       register: vi.fn(),
+      setupAdmin: vi.fn(),
       logout: vi.fn(),
       refresh: vi.fn(),
     });
@@ -71,6 +72,7 @@ describe("ProtectedRoute", () => {
       loading: false,
       login: vi.fn(),
       register: vi.fn(),
+      setupAdmin: vi.fn(),
       logout: vi.fn(),
       refresh: vi.fn(),
     });
@@ -86,6 +88,7 @@ describe("ProtectedRoute", () => {
       loading: false,
       login: vi.fn(),
       register: vi.fn(),
+      setupAdmin: vi.fn(),
       logout: vi.fn(),
       refresh: vi.fn(),
     });
@@ -101,6 +104,7 @@ describe("ProtectedRoute", () => {
       loading: false,
       login: vi.fn(),
       register: vi.fn(),
+      setupAdmin: vi.fn(),
       logout: vi.fn(),
       refresh: vi.fn(),
     });

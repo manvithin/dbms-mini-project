@@ -4,13 +4,13 @@
 
 Submitted as an undergraduate Database Management Systems mini project.
 
-Date: 29 October 2026
+Date: 30 October 2026
 
 ## 1. Abstract
 
 The General Hospital Outpatient Management System is a web application for managing the outpatient journey from appointment booking to consultation records. Patients can compare departments and doctors, view open appointment slots, book a slot, cancel an eligible appointment, review their own clinical history, and print records. Doctors can see only their assigned appointments, move visits through a controlled status sequence, order optional diagnostic tests, record test results, write a diagnosis and prescription, and set a follow up date. Administrators manage departments, doctor accounts, clinic schedules, time off, and the full appointment list.
 
-The project was built to demonstrate practical database concepts rather than to imitate a full hospital enterprise product. The database contains twelve related tables with primary keys, foreign keys, unique constraints, check constraints, indexes, a generated column, a trigger, and a stored procedure. Appointment booking runs inside a transaction and uses row locking plus a unique active slot constraint to prevent double booking. The application uses MySQL 8, a Flask API, and a React frontend.
+The project was built to demonstrate practical database concepts rather than to imitate a full hospital enterprise product. The database contains thirteen related tables with primary keys, foreign keys, unique constraints, check constraints, indexes, a generated column, a trigger, and a stored procedure. Appointment booking runs inside a transaction and uses row locking plus a unique active slot constraint to prevent double booking. The application uses MySQL 8, a Flask API, and a React frontend.
 
 ## 2. Problem statement
 
@@ -66,8 +66,8 @@ This project addresses those problems with a normalised relational database and 
 | Action | Patient | Doctor | Administrator |
 | --- | --- | --- | --- |
 | Browse public doctors and departments | Yes | Yes | Yes |
-| View own profile | Yes | No | No |
-| Edit own patient profile | Yes | No | No |
+| View own profile | Yes | Own doctor record | Own administrator account |
+| Edit own profile | Patient fields | Phone number only | Sign in email and password |
 | Book an appointment | Yes | No | No |
 | Cancel an appointment | Own eligible appointment | No | Any eligible appointment |
 | View appointment list | Own only | Assigned only | All |
@@ -78,6 +78,7 @@ This project addresses those problems with a normalised relational database and 
 | Manage departments and doctors | No | No | Yes |
 | Manage schedules and time off | No | No | Yes |
 | Reset a doctor password | No | No | Yes |
+| Change own administrator email or password | No | No | Yes, with the current password |
 
 The backend checks the signed in account and its role on every protected route. Frontend route guards improve the experience but are not the security boundary.
 
@@ -117,18 +118,20 @@ MySQL 8 on port 3307 in this workspace
 
 The frontend is a single page application. The Vite development server proxies `/api` requests to Flask, so the browser uses one origin during development. The Flask API keeps a signed session cookie and returns JSON. The database is the only shared source of truth.
 
+The deployed demonstration uses Vercel for the React build, Render for the Flask API, and Aiven for MySQL 8.4. Vercel rewrites `/api/:path*` to the Render service, so the browser still sees one origin and the session cookie stays on the Vercel host. The production database is reached over TLS with the Aiven CA certificate. The free Render service spins down after 15 minutes of inactivity, so the first request can take about one minute. The free Aiven service has a 76 connection limit and can power off after inactivity. [Deployment_Guide.md](Deployment_Guide.md) records the environment variables, cold start behaviour, network rules, and the production administrator rotation procedure.
+
 ### Backend structure
 
 | Module | Responsibility |
 | --- | --- |
 | `app/__init__.py` | Application factory, blueprint registration, JSON settings, CORS |
 | `app/config.py` | Environment configuration and session settings |
-| `app/models.py` | Twelve SQLAlchemy models and their constraints |
-| `app/auth.py` | Registration, login, logout, current user, role decorators |
+| `app/models.py` | Thirteen SQLAlchemy models and their constraints |
+| `app/auth.py` | Registration, login, logout, current user, first time setup, CSRF, credential fingerprint, role decorators |
 | `app/public.py` | Public department, doctor, and availability endpoints |
 | `app/appointments.py` | Patient profile, appointments, records, booking, cancellation |
 | `app/doctor.py` | Doctor summaries, status changes, tests, diagnosis, prescription |
-| `app/admin.py` | Administrator summaries and management endpoints |
+| `app/admin.py` | Administrator summaries, security settings, and management endpoints |
 | `app/services/availability.py` | Slot generation, time zone handling, status rules, cancellation rules |
 | `app/services/booking.py` | Stored procedure call and error translation |
 | `app/serializers.py` | Stable JSON shapes |
@@ -136,7 +139,7 @@ The frontend is a single page application. The Vite development server proxies `
 | `app/errors.py` | Safe JSON error responses |
 | `app/db_objects.py` | Trigger and stored procedure SQL |
 | `app/seed.py` | Synthetic demonstration data |
-| `app/cli.py` | Database check, seed, and reset commands |
+| `app/cli.py` | Administrator setup and rotation, database check, seed, and reset commands |
 
 ### Frontend structure
 
@@ -144,7 +147,7 @@ The frontend is a single page application. The Vite development server proxies `
 | --- | --- |
 | `src/App.tsx` | Route map for public, patient, doctor, admin, and print pages |
 | `src/auth/AuthContext.tsx` | Session state, sign in, sign out, role home |
-| `src/api/client.ts` | JSON request helper and typed API errors |
+| `src/api/client.ts` | JSON request helper, CSRF token handling, retry, and typed API errors |
 | `src/hooks/useApi.ts` | Loading, error, data, and reload behaviour |
 | `src/components/` | Buttons, cards, forms, modal, pagination, badges, timeline, record display, avatars, statistics |
 | `src/pages/` | Public, patient, doctor, admin, and print screens |
@@ -152,7 +155,7 @@ The frontend is a single page application. The Vite development server proxies `
 
 ## 8. Database design
 
-The database has twelve tables.
+The database has thirteen tables.
 
 | Table | Purpose |
 | --- | --- |
@@ -168,6 +171,7 @@ The database has twelve tables.
 | `diagnosis` | One diagnosis for an appointment |
 | `prescription` | Treatment plan and instructions for one diagnosis |
 | `appointment_status_history` | Audit rows written by the trigger |
+| `system_setting` | Small key value store for the permanent administrator setup marker |
 
 ### Key relationships
 
@@ -198,7 +202,9 @@ The full explanation is in [Database_Explanation.md](Database_Explanation.md).
 
 A visitor registers as a patient. The server validates the name, email, password, date of birth, gender, phone, address, blood group, and medical history. The password is hashed with PBKDF2 SHA256 and 600,000 iterations. The patient row and account row are inserted in one transaction. A session cookie is created after success.
 
-Doctor and administrator accounts are not created through public registration. The administrator creates doctor accounts from the administrator dashboard. Additional administrator accounts are created with the controlled `flask create-admin` setup command, which hashes the password and creates an account with no patient or doctor link. The demonstration administrator account is created by the seed command.
+Doctor and administrator accounts are not created through public registration. The administrator creates doctor accounts from the administrator dashboard. The first administrator is created with the `/setup` page or the controlled `flask setup-admin` command. Both paths require `ADMIN_SETUP_SECRET`, hash the password with PBKDF2 SHA256 and 600,000 iterations, and write the `admin_setup_completed` marker to `system_setting`. The setup endpoint then returns `409 setup_completed` for every later request, even if the administrator row is later removed.
+
+Existing administrators can change the sign in email or password from the security page. The email change requires the current password. The password change requires the current password and a matching confirmation, rejects reuse of the current password, clears the session, and requires a new sign in. The session stores a fingerprint of the password hash, so every other session that still holds the old hash fingerprint is rejected on its next request. The seed file contains synthetic doctor and patient accounts only. It does not contain an administrator password.
 
 ### 9.2 Availability
 
@@ -264,21 +270,25 @@ Print pages use a dedicated layout without application navigation. Supported pri
 
 ## 10. Security and privacy
 
-* Passwords are hashed with Werkzeug PBKDF2 SHA256 and 600,000 iterations.
-* Password hashes are never returned by the API.
-* Session cookies are HTTP only and use `SameSite=Lax`.
-* Session lifetime defaults to eight hours.
-* The API checks the role on every protected route.
-* Patients can read only their own appointments and records.
-* Doctors can read only appointments assigned to them.
-* Administrators cannot write clinical records.
-* Input is validated for type, length, allowed values, dates, and relationships.
-* Database access uses SQLAlchemy parameter binding, except the controlled procedure call.
-* Error responses use safe messages and do not expose stack traces.
-* Request bodies are limited to one megabyte.
-* Secrets are loaded from environment variables.
-* The `.env` file is ignored by Git.
-* All demonstration data is synthetic.
+* Passwords are hashed with Werkzeug PBKDF2 SHA256 and 600,000 iterations. Password hashes are never returned by the API.
+* The seed file contains no administrator account or administrator password. The first administrator is created through `/setup` or `flask setup-admin`, and both paths require `ADMIN_SETUP_SECRET`.
+* The `admin_setup_completed` marker in `system_setting` permanently closes first time setup after success. The API returns `409 setup_completed` on later attempts.
+* Existing administrator credentials are rotated in place with `flask setup-admin --rotate`, which preserves the account row and all clinical data.
+* Session cookies are `HttpOnly` and use `SameSite=Lax`. Production must set `SESSION_COOKIE_SECURE=true`, so the cookie is sent only over HTTPS. The session lifetime defaults to eight hours.
+* Sign in clears the old session and creates a new session identifier and CSRF token.
+* A session stores a fingerprint of the current password hash. A password change or a restored database invalidates older sessions on their next request.
+* State changing API requests require a session bound CSRF token in the `X-CSRF-Token` header. A missing or wrong token returns `403 csrf_failed`. The frontend fetches the token and retries once after a token refresh.
+* The API checks the role on every protected route. Frontend route guards are only a usability layer.
+* Patients can read only their own appointments and records. Doctors can read only appointments assigned to them. Administrators cannot write clinical records.
+* Request payloads that contain `role`, `user_id`, `patient_id`, `doctor_id`, `is_active`, `username`, or `password_hash` are rejected where those fields are not allowed. A user cannot change a role or attach a patient account to a doctor record through a request body.
+* Doctors can read their own profile and update only the phone number. Name, specialization, department, email, account status, and role stay read only.
+* The administrator security endpoints require the current password for an email change and require the current password plus a matching confirmation for a password change. The old password stops working immediately.
+* Input is validated for type, length, allowed values, dates, and relationships. Database access uses SQLAlchemy parameter binding, except the controlled procedure call.
+* Error responses use safe messages and do not expose stack traces. Request bodies are limited to one megabyte.
+* The API sets `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: same-origin`, `Permissions-Policy`, and `Cache-Control: no-store` for JSON responses.
+* Secrets are loaded from environment variables. The `.env` file is ignored by Git. All demonstration data is synthetic.
+
+The project does not set a Content Security Policy or HTTP Strict Transport Security header itself. HTTPS is terminated by Vercel and Render, and the production cookie must be marked `Secure`. There is no rate limiting, account lockout, multi factor authentication, or separate server side session revocation list. These are stated limits, not claims of enterprise security.
 
 ## 11. User interface
 
@@ -316,13 +326,15 @@ The interface provides loading skeletons, empty states, inline validation, succe
 
 | Suite | Result |
 | --- | --- |
-| Backend Pytest | 46 passed in 93.75 seconds |
-| Frontend Vitest | 29 passed across 8 files |
-| TypeScript and Vite build | Passed |
+| Backend Pytest | 67 passed in 143.71 seconds |
+| Frontend Vitest | 31 passed across 9 files |
+| TypeScript and Vite build | Passed in 7.40 seconds |
 
-Backend tests cover authentication, password hashing, role isolation, public directory search, availability, booking, duplicate booking, concurrent booking, cancellation, slot release, specialty reason validation, trigger history, stored procedure presence, unique slot constraint, check constraint, status transitions, clinical record rules, tests, results, diagnosis, prescription, pagination, validation, dashboard summary previews, and administrator management.
+Backend tests cover authentication, password hashing, role isolation, first time setup, setup secret rejection, setup after administrator exists, administrator credential changes, session invalidation, CSRF, cookie flags, logout, doctor self profile, forbidden role fields, public directory search, availability, booking, duplicate booking, concurrent booking, cancellation, slot release, specialty reason validation, trigger history, stored procedure presence, unique slot constraint, check constraint, status transitions, clinical record rules, tests, results, diagnosis, prescription, pagination, validation, dashboard summary previews, and administrator management.
 
-Frontend tests cover formatting, protected routes, API loading and failure behaviour, clinical record rendering, pagination, button states, modal behaviour, focus stability while typing, and specialty reason guidance.
+The security suite directly proves the 13 requested cases: unauthenticated doctor update returns `401`, patient doctor update returns `403`, doctor updating another doctor returns `403`, doctor on an admin endpoint returns `403`, patient on an admin endpoint returns `403`, administrator doctor update succeeds, invalid administrator credentials are rejected, invalid setup secret is rejected, setup after an administrator exists is rejected, administrator password change succeeds, the old password is rejected, the new password is accepted, and a role change is rejected.
+
+Frontend tests cover formatting, protected routes, API loading and failure behaviour, clinical record rendering, pagination, button states, modal behaviour, focus stability while typing, CSRF token fetch and retry, and specialty reason guidance.
 
 ### Manual acceptance
 
@@ -333,6 +345,9 @@ The following workflows were checked in a real browser against the running appli
 * Doctor sign in, dashboard, appointment status updates, test order, result, diagnosis, prescription, and print views.
 * Administrator sign in, dashboard, department creation, doctor creation, schedule management, time off, appointment filtering, and cancellation.
 * Role isolation between patient, doctor, and administrator routes.
+* First time setup page after setup is complete, with no second setup form.
+* Administrator sign in with the rotated local password, security page, and sign out.
+* Doctor self profile, successful phone update, invalid phone validation, and restore.
 * Back navigation hidden on the public home, sign in, registration, and role landing pages, and present on subpages, detail pages, and print pages.
 * Specialty aware visit reason guidance and server validation on the booking form.
 * Live dashboard cards with real patient previews and links to filtered lists or records.
@@ -344,11 +359,15 @@ Details and test names are in [Test_Report.md](Test_Report.md).
 
 The finished system supports the complete outpatient workflow with real database persistence:
 
-* Six departments, six doctors, four patients, nineteen schedule rows, and ten appointments are available after a demo reset.
-* Two test orders and three prescriptions are included in the demonstration data.
+* A demo reset creates six departments, six doctors, four patients, nineteen schedule rows, ten appointments, two test orders, and three prescriptions.
+* The current development database also contains data from manual acceptance checks: five patients, twelve accounts, thirteen appointments, four test orders, and five prescriptions.
 * The audit trigger and booking procedure are installed and verified.
 * The generated active slot rule prevents duplicate active bookings.
 * All three roles have separate navigation and backend permissions.
+* The first administrator is created without a seeded password, and the setup marker closes setup permanently.
+* Administrator email and password changes work, and the old password stops working.
+* Doctor self profile updates are limited to the phone number.
+* CSRF protection, session cookie flags, and session invalidation are tested.
 * Print views render the stored record.
 * The production frontend build completes successfully.
 
@@ -357,8 +376,10 @@ The finished system supports the complete outpatient workflow with real database
 * The project is not clinically validated and must not be used with real patient data.
 * There is no email verification or patient password reset. An administrator can reset a doctor password.
 * There is no multi factor authentication, rate limiting, or account lockout.
-* There is no explicit CSRF token. The app relies on `SameSite=Lax`, JSON requests, and a restricted origin list.
-* Sessions are stored in Flask signed cookies, so this setup assumes a single backend instance.
+* CSRF protection is implemented, but there is no Content Security Policy or HTTP Strict Transport Security header from Flask. HTTPS is provided by the hosting platforms.
+* Sessions are stored in Flask signed cookies, so this setup assumes a single backend instance. Password changes invalidate sessions through a hash fingerprint, but there is no separate server side session revocation list.
+* The free Render service spins down after inactivity, so the first request can take about one minute. The free Aiven MySQL service has a 76 connection limit and can power off after inactivity.
+* The production administrator password must be rotated after the new backend is deployed. The local rotation does not change Aiven.
 * Diagnostic reports are typed summaries. Files and scanned reports are not supported.
 * Prescriptions are free text. There is no medicine catalogue, stock, or interaction checking.
 * There is no billing, insurance, SMS, or email integration.
@@ -368,4 +389,4 @@ The finished system supports the complete outpatient workflow with real database
 
 ## 15. Conclusion
 
-The project meets its main goal: it is a small but complete outpatient system with a real relational database, meaningful constraints, a transaction safe booking path, an audit trail, role based access, and a usable interface. The design stays within a scope that a student can explain line by line, which was a deliberate requirement. The database concepts are visible in the schema, the stored procedure, the trigger, and the tests rather than being hidden behind unnecessary infrastructure.
+The project meets its main goal: it is a small but complete outpatient system with a real relational database, meaningful constraints, a transaction safe booking path, an audit trail, role based access, first time administrator setup, CSRF protection, and a usable interface. The design stays within a scope that a student can explain line by line, which was a deliberate requirement. The database concepts are visible in the schema, the stored procedure, the trigger, and the tests rather than being hidden behind unnecessary infrastructure.

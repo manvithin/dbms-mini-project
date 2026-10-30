@@ -4,12 +4,12 @@
 
 | Check | Command | Result | Recorded on |
 | --- | --- | --- | --- |
-| Backend test suite | `..\.venv\Scripts\python.exe -m pytest -q` | 46 passed in 93.75 seconds | 30 October 2026 |
-| Frontend test suite | `npm test` | 29 passed across 8 files | 30 October 2026 |
-| Production build | `npm run build` | Passed | 30 October 2026 |
-| Database object check | `flask check-db` | Trigger present, procedure present | 29 October 2026 |
-| Demo data reset | `flask reset-demo` | Passed | 29 October 2026 |
-| Browser acceptance | Manual and Playwright screenshots | Completed | 30 October 2026 |
+| Backend test suite | `..\.venv\Scripts\python.exe -m pytest -q` | 67 passed in 143.71 seconds | 30 October 2026 |
+| Frontend test suite | `npm test` | 31 passed across 9 files | 30 October 2026 |
+| Production build | `npm run build` | Passed in 7.40 seconds | 30 October 2026 |
+| Administrator setup migration | `flask db upgrade` | Applied, clinical counts unchanged | 30 October 2026 |
+| Database object check | `flask check-db` | Trigger present, procedure present | 30 October 2026 |
+| Browser acceptance | Manual checks against the local API | Completed | 30 October 2026 |
 
 ## 2. Environment
 
@@ -24,8 +24,8 @@
 | Application database | `hospital_outpatient` |
 | Test database | `hospital_outpatient_test` |
 | MySQL port in this workspace | 3307 |
-| Backend address | `http://127.0.0.1:5000` |
-| Frontend address | `http://localhost:5173` |
+| Backend address | `http://127.0.0.1:5000` in normal use, `http://127.0.0.1:5001` for the final browser checks because port 5000 was occupied |
+| Frontend address | `http://localhost:5173` in normal use, `http://localhost:5175` for the final browser checks |
 
 The tests use MySQL, not SQLite. This matters because the project depends on MySQL generated columns, check constraints, row locking, triggers, and stored procedures.
 
@@ -40,8 +40,8 @@ Command, from `backend`:
 Output:
 
 ```text
-..............................................                           [100%]
-46 passed in 93.75s (0:01:33)
+...................................................................      [100%]
+67 passed in 143.71s (0:02:23)
 ```
 
 ### 3.1 Authentication and access control
@@ -59,7 +59,6 @@ File: `backend/tests/test_auth.py`
 | `test_unauthenticated_requests_are_rejected` | Protected routes require a session |
 | `test_patient_cannot_use_admin_or_read_another_patient_record` | Role and ownership checks block a patient from admin routes and another patient record |
 | `test_doctor_cannot_read_another_doctors_appointment` | Doctor record isolation works |
-| `test_create_admin_command_hashes_password` | The setup command creates an administrator with a hashed password and no clinical link |
 
 ### 3.2 Public directory, availability, and booking
 
@@ -118,6 +117,37 @@ File: `backend/tests/test_admin_and_db.py`
 | `test_unique_active_slot_constraint_rejects_duplicate` | The unique active slot rule works at database level |
 | `test_check_constraint_rejects_invalid_status` | The status check constraint rejects invalid data |
 
+### 3.5 Security, setup, and credential changes
+
+File: `backend/tests/test_security.py`
+
+These tests use the real Flask test client, the MySQL test database, and the CSRF aware client fixture. They prove the requested permission cases directly at the API boundary.
+
+| Test | What it proves |
+| --- | --- |
+| `test_unauthenticated_doctor_update_is_rejected` | A signed out request to update a doctor returns `401 authentication_required` |
+| `test_patient_cannot_update_a_doctor` | A patient session returns `403 forbidden` on a doctor update |
+| `test_doctor_cannot_update_another_doctor` | A doctor cannot update a different doctor |
+| `test_doctor_cannot_use_an_admin_endpoint` | A doctor gets `403` on administrator summary and security endpoints |
+| `test_patient_cannot_use_an_admin_endpoint` | A patient gets `403` on administrator summary and security endpoints |
+| `test_administrator_can_update_a_doctor` | An administrator can update a doctor and the role remains `admin` |
+| `test_invalid_administrator_credentials_are_rejected` | A wrong administrator password returns `401 invalid_credentials` |
+| `test_invalid_setup_secret_is_rejected` | First time setup with a wrong secret returns `403 invalid_setup_secret` |
+| `test_setup_is_rejected_after_an_administrator_exists` | Setup after an administrator exists returns `409 setup_completed` |
+| `test_first_time_setup_creates_one_administrator_and_closes_setup` | Setup hashes the password, writes the marker, and rejects a second setup |
+| `test_setup_marker_stays_closed_after_administrator_is_removed` | The marker stays closed even if the administrator row is removed |
+| `test_administrator_password_change_requires_current_password` | A wrong current password returns `400 invalid_current_password` |
+| `test_administrator_password_change_invalidates_the_session` | The current session ends, the old password fails, and the new password works |
+| `test_administrator_can_change_the_sign_in_email` | The old email stops working and the new email signs in |
+| `test_role_changes_are_rejected_in_request_payloads` | `role`, `doctor_id`, and other forbidden fields are rejected |
+| `test_doctor_can_view_and_update_only_own_contact_details` | A doctor can read and update only the own phone number |
+| `test_patient_cannot_open_a_doctor_profile` | A patient gets `403` on the doctor self profile routes |
+| `test_csrf_is_required_for_state_changing_requests` | A missing or wrong `X-CSRF-Token` returns `403 csrf_failed` |
+| `test_session_cookie_is_http_only_and_same_site` | The session cookie is `HttpOnly` and `SameSite=Lax` |
+| `test_logout_invalidates_the_session` | Logout clears the session |
+| `test_setup_admin_cli_creates_a_hashed_administrator` | The CLI creates a hashed administrator |
+| `test_setup_admin_cli_rotates_in_place_without_deleting_clinical_data` | Rotation preserves doctors, patients, and appointments |
+
 ## 4. Frontend tests
 
 Command, from `frontend`:
@@ -129,9 +159,9 @@ npm test
 Output:
 
 ```text
- Test Files  8 passed (8)
-      Tests  29 passed (29)
-   Duration  5.32s
+ Test Files  9 passed (9)
+      Tests  31 passed (31)
+   Duration  5.54s
 ```
 
 ### 4.1 Test files
@@ -139,6 +169,7 @@ Output:
 | File | Tests | Area |
 | --- | --- | --- |
 | `src/utils/format.test.ts` | 4 | Date, time, age, plural, and status tone formatting |
+| `src/api/client.test.ts` | 2 | CSRF token fetch, header, and one retry after `csrf_failed` |
 | `src/components/ProtectedRoute.test.tsx` | 4 | Session loading, sign in redirect, role redirect, allowed content |
 | `src/hooks/useApi.test.tsx` | 4 | Load, failure, disabled request, reload |
 | `src/components/ClinicalRecord.test.tsx` | 3 | Empty record, full record, compact mode |
@@ -172,6 +203,14 @@ Output:
 * `renders an accessible dialog and confirms the action`
 * `closes with the cancel button and the Escape key`
 * `renders nothing when closed`
+* `keeps focus while a controlled field is edited`
+* `fetches a session token and sends it on unsafe requests`
+* `refreshes the token and retries once when the backend rejects it`
+* `returns guidance for a known specialty`
+* `accepts a reason that matches the selected specialty`
+* `rejects a reason that clearly belongs to another specialty`
+* `does not match a short word inside a longer word`
+* `accepts any reason for a department without a rule`
 
 ## 5. Production build
 
@@ -181,7 +220,7 @@ Command, from `frontend`:
 npm run build
 ```
 
-The build runs TypeScript checking and Vite production bundling. It completed successfully. The build output was written to `frontend/dist`, which is ignored by Git.
+The build runs TypeScript checking and Vite production bundling. It completed successfully in 7.40 seconds. The build output was written to `frontend/dist`, which is ignored by Git. The bundle was 475.44 kB before gzip and 119.11 kB after gzip.
 
 ## 6. Database checks
 
@@ -192,23 +231,25 @@ $env:FLASK_APP = "run.py"
 ..\.venv\Scripts\flask.exe check-db
 ```
 
-Output after the final demo reset:
+Output after the administrator setup migration and the local credential rotation:
 
 ```text
 departments: 6
 doctors: 6
-patients: 4
-accounts: 11
+patients: 5
+accounts: 12
 schedules: 19
-appointments: 10
-test_orders: 2
-prescriptions: 3
+appointments: 13
+test_orders: 4
+prescriptions: 5
 audit trigger: present
 booking procedure: present
 database: 127.0.0.1:3307/hospital_outpatient
 ```
 
-The account count is eleven: six doctors, four patients, and one administrator.
+The account count is twelve: six doctors, five patients, and one administrator. The counts before and after the `system_setting` migration were identical. The migration added the setup marker with the value `migrated` and did not change clinical rows.
+
+The local administrator password was rotated in place with `flask setup-admin --rotate --current-password ... --generate-password`. The previous local password now returns `401 invalid_credentials`, and the generated password signs in successfully. The generated password is intentionally not recorded here.
 
 ## 7. Manual browser acceptance
 
@@ -224,7 +265,8 @@ The application was started with the real Flask API and MySQL database. The foll
 | Doctor detail page shows clinic hours | Passed |
 | Availability date change shows open slots | Passed |
 | Mobile layout at 390 by 844 | Passed |
-| Sign in page renders and demo fill buttons work | Passed |
+| Sign in page renders, patient and doctor demo buttons work, and no administrator demo button is present | Passed |
+| First time setup page reports setup complete and does not offer a second setup | Passed |
 | Registration page validates fields | Passed |
 | Unknown route shows the not found page | Passed |
 
@@ -262,6 +304,9 @@ The application was started with the real Flask API and MySQL database. The foll
 | Diagnosis can be recorded without a test | Passed |
 | Prescription and follow up date can be recorded | Passed |
 | Completed visit remains readable | Passed |
+| Doctor profile loads only the signed in doctor record | Passed |
+| Doctor phone update succeeds and the original number can be restored | Passed |
+| Invalid doctor phone shows a field error and a `400` response | Passed |
 | Print actions open the correct print page | Passed |
 
 ### 7.4 Administrator area
@@ -281,6 +326,8 @@ The application was started with the real Flask API and MySQL database. The foll
 | Appointment search, status filter, date filter, and scope filter work | Passed |
 | Administrator can cancel an eligible appointment | Passed |
 | Administrator cannot cancel a completed appointment | Passed |
+| Administrator security page loads the current email and both credential forms | Passed |
+| Administrator sign out clears the session and returns to sign in | Passed |
 
 ### 7.5 Access control
 
@@ -318,6 +365,24 @@ These checks were run with a Playwright script against the running application a
 | Dashboard cards list real patient names instead of only totals | Passed |
 | Empty preview areas show a clear message | Passed |
 
+### 7.7 Security settings and setup
+
+These checks were run in the local browser against Flask on port 5001 and Vite on port 5175. The browser console showed only the React development notice and the expected `400` from the invalid phone validation check. The backend log showed the expected `200`, `400`, and `401` responses with no server errors.
+
+| Check | Result |
+| --- | --- |
+| Signed out request to `/api/auth/me` returns `401` and the public page still renders | Passed |
+| Sign in page no longer shows an administrator demo account | Passed |
+| `/setup` reports setup complete after the local administrator exists | Passed |
+| Administrator signs in with the rotated local password | Passed |
+| Administrator dashboard loads after sign in | Passed |
+| Administrator security page loads at `/admin/security` | Passed |
+| Sign out from the security page returns to `/login` and clears the session | Passed |
+| Doctor signs in and loads `/doctor/profile` | Passed |
+| Doctor phone update succeeds and shows a success notification | Passed |
+| Doctor phone update with an invalid value returns `400` and shows a field error | Passed |
+| Doctor phone is restored to the original value | Passed |
+
 ## 8. Screenshot evidence
 
 The following final screenshots are stored in `screenshots/`:
@@ -352,6 +417,10 @@ The project does not claim complete coverage or zero defects.
 * There is no automated visual regression test for the screenshots.
 * The project does not test every possible invalid input combination. The main validation and permission paths are covered.
 * Session behaviour with multiple backend instances was not tested.
+* The live Vercel build and the live Render backend were checked for availability, but the new security build was not deployed during this test run.
+* The production Aiven administrator password was not rotated during this test run. Only the local development administrator was rotated.
+* Render cold starts and Aiven free plan limits were observed and documented, but no uptime guarantee is claimed.
+* The security tests prove the API permission cases. They do not prove that every browser or proxy configuration is safe.
 
 ## 10. Reproduction checklist
 
@@ -363,6 +432,7 @@ cd backend
 $env:FLASK_APP = "run.py"
 ..\.venv\Scripts\flask.exe db upgrade
 ..\.venv\Scripts\flask.exe reset-demo
+..\.venv\Scripts\flask.exe setup-admin --email admin@example.com --generate-password
 ..\.venv\Scripts\python.exe -m pytest -q
 
 # Frontend
@@ -371,4 +441,4 @@ npm test
 npm run build
 ```
 
-If the test database does not exist, create it and grant access before running the backend tests.
+If the test database does not exist, create it and grant access before running the backend tests. The setup command prompts for `ADMIN_SETUP_SECRET`. The generated password is printed once and must not be added to this report.

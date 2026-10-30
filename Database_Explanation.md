@@ -11,7 +11,7 @@ This document explains the MySQL schema used by the General Hospital Outpatient 
 * Time zone for hospital logic: `Asia/Kolkata`
 * Application timestamps: stored in UTC where the column represents an event time
 
-The database contains twelve tables. Two schema migrations create the tables, the audit trigger, and the booking stored procedure.
+The database contains thirteen tables. Three schema migrations create the tables, the audit trigger, the booking stored procedure, and the administrator setup marker.
 
 ## 2. Table summary
 
@@ -29,6 +29,7 @@ The database contains twelve tables. Two schema migrations create the tables, th
 | 10 | `diagnosis` | One diagnosis for an appointment |
 | 11 | `prescription` | Treatment plan for one diagnosis |
 | 12 | `appointment_status_history` | Status audit written by the trigger |
+| 13 | `system_setting` | Small key value store for the permanent administrator setup marker |
 
 ## 3. Table details
 
@@ -250,6 +251,19 @@ Medication and treatment details are stored as text inside `treatment_plan` and 
 Index: `ix_status_history_appointment` on appointment and changed time.
 
 Rows are written by the trigger, not by application code. This gives one consistent audit path for patient, doctor, and administrator status changes.
+
+### 3.13 system_setting
+
+| Column | Type | Rules |
+| --- | --- | --- |
+| `setting_key` | VARCHAR(64) | Primary key |
+| `setting_value` | VARCHAR(255) | Required |
+
+The table stores small named markers that are not clinical data. The only current key is `admin_setup_completed`. Its presence means first time administrator setup has already succeeded and must never run again.
+
+The `d3f8a1b2c4e5_admin_setup.py` migration creates the table. On an existing database it inserts the marker when an administrator row already exists, so an upgraded deployment does not reopen setup. The marker is written in the same transaction as the first administrator account, so a failure cannot leave setup half open.
+
+`system_setting` has no foreign keys and no relationship to the clinical tables. Keeping the marker in its own table means the rule survives even if the administrator account row is later removed.
 
 ## 4. Relationships
 
@@ -558,13 +572,15 @@ The reset command loads:
 | Departments | 6 |
 | Doctors | 6 |
 | Patients | 4 |
-| User accounts | 11 |
+| User accounts | 10 (six doctor and four patient accounts, no administrator) |
 | Schedule rows | 19 |
 | Appointments | 10 |
 | Test orders | 2 |
 | Prescriptions | 3 |
 
 The seed creates past, today, and future appointments with a mixture of statuses. It also creates realistic status history, a completed visit with a diagnosis and prescription, and a visit with an ordered test that has no result yet.
+
+The administrator is not seeded. Run `flask setup-admin` after a reset to create one. That adds one account row and one `system_setting` marker, so a fresh local demonstration has eleven accounts in total.
 
 All names, phone numbers, addresses, and clinical notes are synthetic.
 
@@ -593,6 +609,12 @@ It keeps the multi step check and insert inside one transaction with row locking
 
 **Why is the trigger `BEFORE UPDATE`?**
 It needs to modify `NEW.updated_at` and compare old and new status before the row is written.
+
+**Why is the administrator setup marker in the database instead of only an environment variable?**
+An environment variable can be changed or left set by mistake. The marker is written in the same transaction as the first administrator and cannot be removed through the API. The setup endpoint therefore stays closed even if the administrator row is later deleted or the secret is left in the environment.
+
+**Why does the setup marker table have a string primary key?**
+It stores a small number of named settings. The name is the natural key, so `setting_key` is the primary key and no extra surrogate identifier is needed.
 
 **What happens if a doctor is deactivated?**
 The public directory excludes the doctor. New bookings are rejected by the procedure. Existing appointments remain because appointments use `RESTRICT` on doctor deletion.

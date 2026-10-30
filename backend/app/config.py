@@ -34,11 +34,14 @@ class Config:
     }
 
     APP_TIMEZONE = os.getenv("APP_TIMEZONE", "Asia/Kolkata")
+    SESSION_COOKIE_NAME = os.getenv("SESSION_COOKIE_NAME", "hospital_session")
     SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE", "Lax")
     SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", False)
     PERMANENT_SESSION_LIFETIME = timedelta(hours=int(os.getenv("SESSION_HOURS", "8")))
     MAX_CONTENT_LENGTH = 1024 * 1024
+    CSRF_ENABLED = env_bool("CSRF_ENABLED", True)
+    ADMIN_SETUP_SECRET = os.getenv("ADMIN_SETUP_SECRET", "")
     CORS_ORIGINS = [
         origin.strip()
         for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")

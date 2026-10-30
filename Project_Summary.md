@@ -14,15 +14,15 @@ The application provides three separate role areas:
 
 * **Patient:** register, browse doctors and departments, view open slots, book, cancel, review own records, update own profile, and print records.
 * **Doctor:** view only assigned appointments, move visits through allowed statuses, order optional tests, record results, diagnosis, prescription, and follow up date.
-* **Administrator:** manage departments, doctors, schedules, time off, and all appointments, and reset doctor passwords.
+* **Administrator:** manage departments, doctors, schedules, time off, and all appointments, reset doctor passwords, and change the administrator sign in email and password.
 
 The public area lets visitors compare departments, doctors, clinic hours, and availability before signing in.
 
 ### Database highlights
 
-The schema has twelve tables:
+The schema has thirteen tables:
 
-`patient`, `department`, `doctor`, `user_account`, `doctor_schedule`, `doctor_time_off`, `appointment`, `test_order`, `test_result`, `diagnosis`, `prescription`, and `appointment_status_history`.
+`patient`, `department`, `doctor`, `user_account`, `doctor_schedule`, `doctor_time_off`, `appointment`, `test_order`, `test_result`, `diagnosis`, `prescription`, `appointment_status_history`, and `system_setting`.
 
 Key database features:
 
@@ -36,16 +36,15 @@ Key database features:
 
 ### Security
 
-* Passwords are hashed with PBKDF2 SHA256 and 600,000 iterations.
-* Password hashes are never returned by the API.
-* Session cookies are HTTP only and use `SameSite=Lax`.
-* Every protected backend route checks the role.
-* Patients can read only their own records.
-* Doctors can read only assigned appointments.
-* Administrators cannot write clinical records.
-* Input is validated on the server.
-* Secrets are stored in environment variables.
-* All data is synthetic.
+* Passwords are hashed with PBKDF2 SHA256 and 600,000 iterations. Password hashes are never returned by the API.
+* The seed file contains no administrator password. The first administrator is created with `/setup` or `flask setup-admin`, guarded by `ADMIN_SETUP_SECRET`.
+* The `system_setting` marker permanently closes first time setup after success.
+* Session cookies are `HttpOnly`, use `SameSite=Lax`, and must be marked `Secure` in production. The lifetime defaults to eight hours.
+* State changing requests require a session bound CSRF token in `X-CSRF-Token`.
+* Every protected backend route checks the role. Forbidden role and account link fields are rejected in request payloads.
+* Patients can read only their own records. Doctors can read only assigned appointments and can update only their own phone number. Administrators cannot write clinical records.
+* Administrator email and password changes require the current password. A password change ends sessions and the old password stops working.
+* Input is validated on the server. Secrets are stored in environment variables. All data is synthetic.
 
 ### Interface
 
@@ -63,12 +62,12 @@ The visual system includes synthetic doctor portraits, department illustrations,
 
 | Check | Result |
 | --- | --- |
-| Backend tests | 46 passed |
-| Frontend tests | 29 passed across 8 files |
+| Backend tests | 67 passed |
+| Frontend tests | 31 passed across 9 files |
 | Production build | Passed |
-| Demo data reset | Passed |
+| Administrator setup migration | Applied, clinical counts unchanged |
 | Trigger and procedure check | Present |
-| Browser acceptance | Completed for the main workflows |
+| Browser acceptance | Completed for the main workflows and security settings |
 
 ### Main design choices
 
@@ -81,15 +80,16 @@ The visual system includes synthetic doctor portraits, department illustrations,
 
 ### Known limitations
 
-The project has no email verification, patient password reset, multi factor authentication, CSRF token, rate limiting, file upload for test reports, medicine inventory, billing, or external laboratory integration. It is an educational demonstration, not a clinical system. The documented workflows pass, but the project does not claim zero defects.
+The project has no email verification, patient password reset, multi factor authentication, rate limiting, file upload for test reports, medicine inventory, billing, or external laboratory integration. CSRF protection and first time administrator setup are implemented, but there is no Content Security Policy, HTTP Strict Transport Security header, or separate server side session revocation list. The free Render service can take about one minute to wake, and the free Aiven database has a 76 connection limit and can power off after inactivity. It is an educational demonstration, not a clinical system. The documented workflows pass, but the project does not claim zero defects.
 
 ### Demonstration accounts
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Administrator | `admin@cityhospital.example` | `Admin@123` |
 | Doctor | `meera.iyer@example.com` | `Doctor@123` |
 | Patient | `riya.kapoor@example.com` | `Patient@123` |
+
+The administrator account is created locally with `flask setup-admin` and is not seeded with a public password. The production administrator must be rotated before the live site is used.
 
 ### Documentation map
 
@@ -100,3 +100,4 @@ The project has no email verification, patient password reset, multi factor auth
 * [Test_Report.md](Test_Report.md) for test evidence.
 * [Demo_Guide.md](Demo_Guide.md) for the demonstration.
 * [Viva_Preparation.md](Viva_Preparation.md) for questions and answers.
+* [Deployment_Guide.md](Deployment_Guide.md) for Vercel, Render, Aiven, and production rotation.

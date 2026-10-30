@@ -4,6 +4,7 @@ from datetime import date, time, timedelta
 from pathlib import Path
 
 import pytest
+from flask.testing import FlaskClient
 from sqlalchemy import text
 from werkzeug.security import generate_password_hash
 
@@ -29,6 +30,40 @@ from app.seed import TABLES_IN_DELETE_ORDER
 from app.services.availability import hospital_now
 
 TEST_DATABASE_URI = os.getenv("TEST_DATABASE_URL", TestConfig.SQLALCHEMY_DATABASE_URI)
+TEST_SETUP_SECRET = "test-admin-setup-secret-123"
+
+
+class CsrfClient(FlaskClient):
+    """Test client that keeps a session bound CSRF token in sync."""
+
+    _csrf_token = None
+
+    def get_csrf_token(self):
+        if not self._csrf_token:
+            response = super().open("/api/auth/csrf", method="GET")
+            self._csrf_token = response.get_json()["csrf_token"]
+        return self._csrf_token
+
+    def open(self, *args, **kwargs):
+        method = kwargs.get("method")
+        if method is None and args:
+            method = getattr(args[0], "method", "GET")
+        method = (method or "GET").upper()
+        if method not in {"GET", "HEAD", "OPTIONS", "TRACE"}:
+            headers = kwargs.get("headers")
+            if headers is None:
+                headers = {}
+            else:
+                headers = dict(headers)
+            if not any(key.lower() == "x-csrf-token" for key in headers):
+                headers["X-CSRF-Token"] = self.get_csrf_token()
+            kwargs["headers"] = headers
+        response = super().open(*args, **kwargs)
+        if response.is_json:
+            payload = response.get_json(silent=True)
+            if isinstance(payload, dict) and payload.get("csrf_token"):
+                self._csrf_token = payload["csrf_token"]
+        return response
 
 
 @pytest.fixture(scope="session")
@@ -40,8 +75,10 @@ def app():
             "SQLALCHEMY_DATABASE_URI": TEST_DATABASE_URI,
             "SESSION_COOKIE_SECURE": False,
             "CORS_ORIGINS": ["http://localhost:5173"],
+            "ADMIN_SETUP_SECRET": TEST_SETUP_SECRET,
         }
     )
+    application.test_client_class = CsrfClient
     with application.app_context():
         db.drop_all()
         db.create_all()
@@ -57,6 +94,12 @@ def client(app):
     return app.test_client()
 
 
+@pytest.fixture()
+def raw_client(app):
+    """Client without automatic CSRF handling for negative tests."""
+    return FlaskClient(app, app.response_class)
+
+
 def clear_data():
     db.session.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
     for table in TABLES_IN_DELETE_ORDER:
@@ -67,7 +110,7 @@ def clear_data():
     db.session.commit()
 
 
-def create_base_data():
+def create_base_data(include_admin=True):
     general = Department(
         department_name="General Medicine",
         description="First contact care for common illnesses and long term conditions.",
@@ -119,12 +162,6 @@ def create_base_data():
 
     accounts = [
         User_Account(
-            username="admin@example.com",
-            password_hash=generate_password_hash("Admin@123", method="pbkdf2:sha256:600000"),
-            role="admin",
-            is_active=True,
-        ),
-        User_Account(
             username="asha.rao@example.com",
             password_hash=generate_password_hash("Doctor@123", method="pbkdf2:sha256:600000"),
             role="doctor",
@@ -153,6 +190,18 @@ def create_base_data():
             is_active=True,
         ),
     ]
+    if include_admin:
+        accounts.insert(
+            0,
+            User_Account(
+                username="admin@example.com",
+                password_hash=generate_password_hash(
+                    "Admin@123", method="pbkdf2:sha256:600000"
+                ),
+                role="admin",
+                is_active=True,
+            ),
+        )
     db.session.add_all(accounts)
 
     schedules = []
@@ -283,6 +332,18 @@ def seeded(app):
     with app.app_context():
         clear_data()
         data = create_base_data()
+    yield data
+    with app.app_context():
+        db.session.remove()
+        clear_data()
+
+
+@pytest.fixture()
+def seeded_no_admin(app):
+    """Base data without an administrator so first time setup can be tested."""
+    with app.app_context():
+        clear_data()
+        data = create_base_data(include_admin=False)
     yield data
     with app.app_context():
         db.session.remove()

@@ -1,19 +1,31 @@
+import hashlib
+import hmac
+import secrets
 from datetime import date
 from functools import wraps
 
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, current_app, jsonify, request, session
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .errors import ApiError
 from .extensions import db
-from .models import BLOOD_GROUPS, GENDERS, Patient, User_Account
+from .models import (
+    ADMIN_SETUP_KEY,
+    BLOOD_GROUPS,
+    GENDERS,
+    Patient,
+    System_Setting,
+    User_Account,
+    utcnow,
+)
 from .serializers import serialize_user
 from .services.availability import hospital_now
 from .validation import (
     json_body,
     optional_text,
     parse_date,
+    reject_forbidden_fields,
     required_text,
     validate_email,
     validate_name,
@@ -23,12 +35,66 @@ from .validation import (
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
+SAFE_METHODS = {"GET", "HEAD", "OPTIONS", "TRACE"}
+CSRF_SESSION_KEY = "csrf_token"
+CREDENTIAL_SESSION_KEY = "credential_fingerprint"
+
+
+def credential_fingerprint(user):
+    """Return a stable fingerprint of the current password hash."""
+    return hashlib.sha256(user.password_hash.encode("utf-8")).hexdigest()
+
+
+def ensure_csrf_token():
+    token = session.get(CSRF_SESSION_KEY)
+    if not token:
+        token = secrets.token_urlsafe(32)
+        session[CSRF_SESSION_KEY] = token
+    return token
+
+
+def rotate_csrf_token():
+    token = secrets.token_urlsafe(32)
+    session[CSRF_SESSION_KEY] = token
+    return token
+
+
+def csrf_protect():
+    """Reject state changing API requests without the session CSRF token."""
+    if not current_app.config.get("CSRF_ENABLED", True):
+        return None
+    if request.method in SAFE_METHODS or not request.path.startswith("/api/"):
+        return None
+    expected = session.get(CSRF_SESSION_KEY)
+    supplied = request.headers.get("X-CSRF-Token", "")
+    if not expected or not supplied or not hmac.compare_digest(str(expected), str(supplied)):
+        return (
+            jsonify(
+                {
+                    "error": "Your security token is missing or expired. Refresh the page and try again.",
+                    "code": "csrf_failed",
+                }
+            ),
+            403,
+        )
+    return None
+
 
 def get_current_user():
     user_id = session.get("user_id")
     if not user_id:
         return None
-    return db.session.get(User_Account, user_id)
+    user = db.session.get(User_Account, user_id)
+    if user is None:
+        session.clear()
+        ensure_csrf_token()
+        return None
+    if session.get(CREDENTIAL_SESSION_KEY) != credential_fingerprint(user):
+        # A password change or a restored database invalidates older sessions.
+        session.clear()
+        ensure_csrf_token()
+        return None
+    return user
 
 
 def login_required(view):
@@ -39,6 +105,7 @@ def login_required(view):
             raise ApiError("Please sign in to continue.", 401, "authentication_required")
         if not user.is_active:
             session.clear()
+            ensure_csrf_token()
             raise ApiError("This account is inactive. Contact the hospital administrator.", 403, "inactive_account")
         return view(*args, **kwargs)
 
@@ -63,12 +130,120 @@ def role_required(*roles):
 def start_session(user):
     session.clear()
     session["user_id"] = user.user_id
+    session[CREDENTIAL_SESSION_KEY] = credential_fingerprint(user)
     session.permanent = True
+    return rotate_csrf_token()
+
+
+def setup_completed():
+    marker = db.session.get(System_Setting, ADMIN_SETUP_KEY)
+    if marker is not None:
+        return True
+    return User_Account.query.filter_by(role="admin").first() is not None
+
+
+def mark_setup_completed(value="completed"):
+    marker = db.session.get(System_Setting, ADMIN_SETUP_KEY)
+    if marker is None:
+        db.session.add(System_Setting(setting_key=ADMIN_SETUP_KEY, setting_value=value))
+
+
+
+@auth_bp.get("/csrf")
+def csrf_token():
+    """Issue a session bound CSRF token for the browser client."""
+    return jsonify({"csrf_token": ensure_csrf_token()})
+
+
+@auth_bp.get("/setup-status")
+def setup_status():
+    """Report whether first time administrator setup is still possible."""
+    completed = setup_completed()
+    return jsonify(
+        {
+            "setup_required": not completed,
+            "setup_completed": completed,
+            "setup_available": bool(current_app.config.get("ADMIN_SETUP_SECRET")),
+            "admin_exists": User_Account.query.filter_by(role="admin").first() is not None,
+        }
+    )
+
+
+@auth_bp.post("/setup-admin")
+def setup_admin():
+    """Create the first administrator exactly once, guarded by an environment secret."""
+    if setup_completed():
+        raise ApiError(
+            "Administrator setup is already complete. Sign in with the existing administrator account.",
+            409,
+            "setup_completed",
+        )
+
+    secret = current_app.config.get("ADMIN_SETUP_SECRET") or ""
+    if len(secret) < 16:
+        raise ApiError(
+            "Administrator setup is not configured. Set ADMIN_SETUP_SECRET in the backend environment.",
+            503,
+            "setup_unavailable",
+        )
+
+    data = json_body()
+    reject_forbidden_fields(
+        data,
+        {"role", "user_id", "patient_id", "doctor_id", "is_active", "username", "password_hash"},
+    )
+    supplied = data.get("setup_secret")
+    if not isinstance(supplied, str) or not hmac.compare_digest(supplied, secret):
+        raise ApiError("The setup secret is incorrect.", 403, "invalid_setup_secret")
+
+    email = validate_email(data.get("email"))
+    password = validate_password(data.get("password"))
+    confirm_password = data.get("confirm_password")
+    if confirm_password != password:
+        raise ApiError(
+            "Please correct the highlighted fields.",
+            400,
+            "validation_error",
+            {"confirm_password": "Passwords do not match."},
+        )
+
+    if User_Account.query.filter_by(username=email).first():
+        raise ApiError("An account with this email already exists.", 409, "duplicate_email")
+
+    account = User_Account(
+        username=email,
+        password_hash=generate_password_hash(password, method="pbkdf2:sha256:600000"),
+        role="admin",
+        is_active=True,
+    )
+    db.session.add(account)
+    mark_setup_completed(utcnow().isoformat())
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        raise ApiError("Administrator setup is already complete.", 409, "setup_completed")
+
+    token = start_session(account)
+    return (
+        jsonify(
+            {
+                "message": "Administrator account created.",
+                "user": serialize_user(account),
+                "csrf_token": token,
+            }
+        ),
+        201,
+    )
 
 
 @auth_bp.post("/register")
 def register():
     data = json_body()
+    reject_forbidden_fields(
+        data,
+        {"role", "user_id", "patient_id", "doctor_id", "is_active", "username", "password_hash"},
+    )
     name = validate_name(data.get("name"))
     email = validate_email(data.get("email"))
     password = validate_password(data.get("password"))
@@ -134,12 +309,23 @@ def register():
         raise ApiError("An account with this email already exists.", 409, "duplicate_email")
 
     start_session(account)
-    return jsonify({"message": "Your patient account is ready.", "user": serialize_user(account)}), 201
+    token = session.get(CSRF_SESSION_KEY)
+    return (
+        jsonify(
+            {
+                "message": "Your patient account is ready.",
+                "user": serialize_user(account),
+                "csrf_token": token,
+            }
+        ),
+        201,
+    )
 
 
 @auth_bp.post("/login")
 def login():
     data = json_body()
+    reject_forbidden_fields(data, {"role", "user_id", "patient_id", "doctor_id", "is_active"})
     email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
     if not email or not password:
@@ -156,13 +342,21 @@ def login():
         raise ApiError("This account is inactive. Contact the hospital administrator.", 403, "inactive_account")
 
     start_session(account)
-    return jsonify({"message": "Signed in successfully.", "user": serialize_user(account)})
+    token = session.get(CSRF_SESSION_KEY)
+    return jsonify(
+        {
+            "message": "Signed in successfully.",
+            "user": serialize_user(account),
+            "csrf_token": token,
+        }
+    )
 
 
 @auth_bp.post("/logout")
 def logout():
     session.clear()
-    return jsonify({"message": "Signed out successfully."})
+    token = ensure_csrf_token()
+    return jsonify({"message": "Signed out successfully.", "csrf_token": token})
 
 
 @auth_bp.get("/me")
@@ -172,5 +366,6 @@ def me():
         raise ApiError("Please sign in to continue.", 401, "authentication_required")
     if not user.is_active:
         session.clear()
+        ensure_csrf_token()
         raise ApiError("This account is inactive. Contact the hospital administrator.", 403, "inactive_account")
-    return jsonify({"user": serialize_user(user)})
+    return jsonify({"user": serialize_user(user), "csrf_token": ensure_csrf_token()})

@@ -30,6 +30,7 @@ ACTIVE_APPOINTMENT_STATUSES = (
 
 TEST_STATUSES = ("Ordered", "Completed", "Cancelled")
 USER_ROLES = ("patient", "doctor", "admin")
+ADMIN_SETUP_KEY = "admin_setup_completed"
 GENDERS = ("Female", "Male", "Other", "Prefer not to say")
 BLOOD_GROUPS = ("A positive", "A negative", "B positive", "B negative", "AB positive", "AB negative", "O positive", "O negative", "Unknown")
 
@@ -131,6 +132,13 @@ class User_Account(db.Model):
             name="ck_user_account_role_link",
         ),
     )
+
+
+class System_Setting(db.Model):
+    __tablename__ = "system_setting"
+
+    setting_key = db.Column(db.String(64), primary_key=True)
+    setting_value = db.Column(db.String(255), nullable=False)
 
 
 class Doctor_Schedule(db.Model):

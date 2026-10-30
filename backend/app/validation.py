@@ -228,6 +228,32 @@ def parse_bool(value, field, label):
     )
 
 
+def reject_forbidden_fields(data, forbidden, message="This field cannot be changed here."):
+    """Reject fields that a client is never allowed to set."""
+    unexpected = sorted(set(data) & set(forbidden))
+    if unexpected:
+        field = unexpected[0]
+        raise ApiError(
+            "The request contains a field that cannot be changed here.",
+            400,
+            "forbidden_field",
+            {field: message},
+        )
+
+
+def reject_unexpected_fields(data, allowed, message="This field cannot be changed here."):
+    """Reject every field outside a small allowlist."""
+    unexpected = sorted(set(data) - set(allowed))
+    if unexpected:
+        field = unexpected[0]
+        raise ApiError(
+            "The request contains a field that cannot be changed here.",
+            400,
+            "forbidden_field",
+            {field: message},
+        )
+
+
 def pagination_args(default_per_page=10):
     page = request.args.get("page", 1, type=int) or 1
     per_page = request.args.get("per_page", default_per_page, type=int) or default_per_page

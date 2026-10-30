@@ -32,7 +32,7 @@ patients: 4
 appointments: 10
 ```
 
-The reset deletes the demonstration rows, restarts identifiers from 1, and reloads the data. Run it before the viva so the dates are current.
+The reset deletes the demonstration rows, including the administrator account and the setup marker, restarts identifiers from 1, and reloads the data. Run it before the viva so the dates are current, then run `setup-admin` again. This command is for the local synthetic demonstration only.
 
 ### 1.3 Start the backend
 
@@ -59,24 +59,33 @@ Keep this terminal open. Open `http://localhost:5173`.
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Administrator | `admin@cityhospital.example` | `Admin@123` |
 | Doctor | `meera.iyer@example.com` | `Doctor@123` |
 | Patient | `riya.kapoor@example.com` | `Patient@123` |
 
-The sign in page has three quick fill buttons for these accounts.
+The sign in page has quick fill buttons for the synthetic patient and doctor accounts. It does not have an administrator demo button.
 
-### 1.6 Creating another administrator or doctor
+The administrator account is created locally with `flask setup-admin`. The generated password is printed once and must be stored in a password manager, not in this guide.
+
+### 1.6 Creating the administrator or a doctor
 
 Public registration creates patients only.
 
-To create another administrator, run this from `backend`:
+If no administrator exists, create the first one from `backend`:
 
 ```powershell
 $env:FLASK_APP = "run.py"
-..\.venv\Scripts\flask.exe create-admin --email admin2@cityhospital.example
+..\.venv\Scripts\flask.exe setup-admin --email admin@example.com --generate-password
 ```
 
-Enter a password when prompted. It must be 8 to 128 characters and include at least one letter and one number.
+The command asks for `ADMIN_SETUP_SECRET`. It hashes the password with PBKDF2 SHA256 and 600,000 iterations and prints the generated password once. The setup marker then closes first time setup permanently.
+
+If an administrator already exists, rotate the credentials in place:
+
+```powershell
+..\.venv\Scripts\flask.exe setup-admin --rotate --email admin@example.com --generate-password
+```
+
+The command asks for the current password. It updates the existing account and preserves all clinical data.
 
 To create a doctor, sign in as an administrator, open **Doctors**, click **Add doctor**, fill the doctor details, login email, and temporary password, then click **Create doctor**. The doctor account is created with the doctor record.
 
@@ -151,8 +160,10 @@ Talking point: clinical forms are disabled until the patient is checked in. The 
 9. Open **Time off** and show a blocked period.
 10. Open **Appointments** and demonstrate search by patient name and the status filter.
 11. Cancel an eligible appointment and show that the slot is released.
+12. Open **Security** and show the email and password forms. Point out that the current password is required and that a password change ends every session.
+13. Sign out and show that the protected page returns to sign in.
 
-Talking point: doctors are hospital users, but their permissions are narrower than the administrator. Doctors can only see their assigned appointments. Administrators manage hospital data but do not write clinical records.
+Talking point: doctors are hospital users, but their permissions are narrower than the administrator. Doctors can only see their assigned appointments. Administrators manage hospital data but do not write clinical records. The backend enforces every role check even if the frontend is bypassed.
 
 ### Minute 9 to 10: Database evidence
 
@@ -175,13 +186,15 @@ Then run:
 ..\.venv\Scripts\python.exe -m pytest -q
 ```
 
-Show the passing backend suite. If time is short, show the recorded result in [Test_Report.md](Test_Report.md).
+Show the passing backend suite. The current result is 67 passed. If time is short, show the recorded result in [Test_Report.md](Test_Report.md).
+
+Point out the security tests in `backend/tests/test_security.py`. They prove that a signed out user gets `401` on a doctor update, a patient and a doctor get `403` on administrator endpoints, a doctor cannot update another doctor, an administrator can update a doctor, a role change in a request body is rejected, first time setup requires the secret and closes permanently, and a password change ends the old session and the old password.
 
 ## 3. What to emphasise in the viva
 
 | Topic | Point to show |
 | --- | --- |
-| Relational design | Twelve tables with primary and foreign keys |
+| Relational design | Thirteen tables with primary and foreign keys |
 | Normalisation | Department, doctor, patient, and account data stored once |
 | Constraints | Unique username, unique department name, check constraints, role link check |
 | Generated column | `slot_active` derives from status |
@@ -190,7 +203,7 @@ Show the passing backend suite. If time is short, show the recorded result in [T
 | Stored procedure | Booking checks and insert happen in one transaction with row locking |
 | Concurrency | Two simultaneous bookings produce one appointment |
 | Optional tests | Diagnosis and prescription work without a test |
-| Security | Password hashing, session cookie, backend role checks, record ownership |
+| Security | Password hashing, first time setup secret, CSRF, secure session cookie, backend role checks, record ownership, credential rotation |
 | Print views | Same data, dedicated layout |
 
 ## 4. Suggested questions to ask yourself while practising
@@ -233,7 +246,9 @@ Choose another date or reset the demo data.
 
 ### Sign in fails
 
-Check that the backend is running and that the database was seeded. The demo accounts are printed by `reset-demo`.
+Check that the backend is running and that the database was seeded. The synthetic doctor and patient accounts are printed by `reset-demo`. The administrator account is not printed because it is created with `setup-admin`.
+
+If the administrator password is lost, rotate it from a trusted terminal with the current password. If the current password is also lost, restore the database from a backup or use a controlled local recovery procedure. Do not add a public reset endpoint.
 
 ### The page shows a network error
 
@@ -262,11 +277,15 @@ Press `Ctrl+C` in the frontend terminal and in the backend terminal. MySQL can k
 ## 7. Clean demonstration checklist
 
 * [ ] MySQL is running.
-* [ ] Demo data was reset today.
+* [ ] Demo data was reset today, or the existing data is current.
+* [ ] The administrator was created or rotated with `setup-admin`.
 * [ ] Backend is running on port 5000.
 * [ ] Frontend is running on port 5173.
 * [ ] Browser is open at `http://localhost:5173`.
-* [ ] Demo account details are ready.
+* [ ] Synthetic doctor and patient account details are ready.
+* [ ] The administrator password is in the password manager, not in the slide deck.
+* [ ] The login page does not show an administrator demo button.
 * [ ] Screenshots are available as a backup.
 * [ ] Test report is available.
 * [ ] The database check command has been rehearsed.
+* [ ] The security settings page and sign out have been rehearsed.

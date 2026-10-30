@@ -12,14 +12,24 @@ The application is implemented and verified in this workspace.
 
 | Check | Result |
 | --- | --- |
-| Backend tests | 46 passed |
-| Frontend tests | 29 passed across 8 files |
+| Backend tests | 67 passed |
+| Frontend tests | 31 passed across 9 files |
 | Production build | Passed |
-| Demo data reset | Passed |
+| Administrator setup migration | Applied without changing clinical data |
 | Database object check | Trigger and procedure present |
-| Manual browser acceptance | Completed for the main workflows |
+| Manual browser acceptance | Completed for the main workflows and security settings |
 
-The exact commands and results are recorded in [Test_Report.md](Test_Report.md).
+The exact commands and results are recorded in [Test_Report.md](Test_Report.md). Deployment details are in [Deployment_Guide.md](Deployment_Guide.md).
+
+The live demonstration is split across three free services:
+
+| Part | Service | Address |
+| --- | --- | --- |
+| Frontend | Vercel | `https://clinic-frontend-nine-gold.vercel.app/` |
+| Backend API | Render | `https://dbms-mini-project-ybmr.onrender.com` |
+| Database | Aiven MySQL 8.4 | Private Aiven service |
+
+The live frontend still served the older build when this report was written. The new security build must be redeployed, and the production administrator password must be rotated before the public demonstration is treated as updated. See [Deployment_Guide.md](Deployment_Guide.md).
 
 ## Roles
 
@@ -27,7 +37,7 @@ The exact commands and results are recorded in [Test_Report.md](Test_Report.md).
 | --- | --- |
 | Patient | Register, sign in, browse doctors and facilities, book or cancel appointments, view own appointments and clinical records, update own profile, print records |
 | Doctor | View only assigned appointments, move appointments through allowed statuses, order optional tests, record results, diagnosis, prescription, treatment plan, and follow up date |
-| Administrator | Manage departments, doctors, schedules, time off, and all appointments, reset doctor passwords, cancel eligible appointments |
+| Administrator | Manage departments, doctors, schedules, time off, and all appointments, reset doctor passwords, cancel eligible appointments, change the administrator sign in email and password |
 
 Doctors are hospital users with narrower clinical permissions than administrators. The three roles are intentionally kept separate.
 
@@ -74,6 +84,7 @@ dbms project/
   Demo_Guide.md
   Viva_Preparation.md
   Project_Summary.md
+  Deployment_Guide.md
 ```
 
 ## Local setup
@@ -116,7 +127,7 @@ python -m venv .venv
 Copy-Item backend\.env.example backend\.env
 ```
 
-Edit `backend\.env` and set `SECRET_KEY`, `DATABASE_URL`, and `TEST_DATABASE_URL`.
+Edit `backend\.env` and set `SECRET_KEY`, `DATABASE_URL`, `TEST_DATABASE_URL`, and `ADMIN_SETUP_SECRET`. Keep `SESSION_COOKIE_SECURE=false` only for local HTTP development. Set it to `true` in production.
 
 Example values:
 
@@ -124,6 +135,17 @@ Example values:
 SECRET_KEY=replace_with_a_long_random_local_secret
 DATABASE_URL=mysql+pymysql://hospital_app:your_password@127.0.0.1:3306/hospital_outpatient
 TEST_DATABASE_URL=mysql+pymysql://hospital_app:your_password@127.0.0.1:3306/hospital_outpatient_test
+ADMIN_SETUP_SECRET=replace_with_a_long_random_setup_secret
+SESSION_HOURS=8
+SESSION_COOKIE_SAMESITE=Lax
+SESSION_COOKIE_SECURE=false
+CSRF_ENABLED=true
+```
+
+`ADMIN_SETUP_SECRET` must be at least 16 characters. It guards the one time administrator setup endpoint. Generate it with a password manager or a command such as:
+
+```powershell
+python -c "import secrets; print(secrets.token_urlsafe(32))"
 ```
 
 This workspace uses port 3307 because its bundled MySQL listens there. A standard MySQL install usually uses 3306.
@@ -138,9 +160,24 @@ $env:FLASK_APP = "run.py"
 ..\.venv\Scripts\flask.exe check-db
 ```
 
-The migrations create all tables, the audit trigger, and the booking stored procedure.
+The migrations create all tables, the audit trigger, the booking stored procedure, and the administrator setup marker.
 
-### 5. Start the application
+### 5. Create the first administrator
+
+The seed file does not contain an administrator password. Create the first administrator with the controlled command, from `backend`:
+
+```powershell
+$env:FLASK_APP = "run.py"
+..\.venv\Scripts\flask.exe setup-admin --email admin@example.com --generate-password
+```
+
+The command asks for `ADMIN_SETUP_SECRET` when it is not supplied on the command line. It prints the generated password once. Store that password in a password manager before closing the terminal. It is not written to the repository, the database, or the documentation. The database stores only the PBKDF2 hash.
+
+For a scripted local setup, pass `--setup-secret` and `--password` instead. Do not put a real password in a command that is saved to shell history or a log.
+
+After setup succeeds, the setup marker is written to `system_setting`. The setup endpoint then returns `409 setup_completed` for every later request. Use the administrator security page to change the email or password.
+
+### 6. Start the application
 
 Open two terminals.
 
@@ -162,30 +199,33 @@ Open `http://localhost:5173`. The Vite development server proxies `/api` request
 
 ## Demo accounts
 
+The seed file contains synthetic patient and doctor accounts only.
+
 | Role | Email | Password |
 | --- | --- | --- |
-| Administrator | `admin@cityhospital.example` | `Admin@123` |
 | Doctor | `meera.iyer@example.com` | `Doctor@123` |
 | Patient | `riya.kapoor@example.com` | `Patient@123` |
 
 All data is synthetic. Do not enter real patient information.
 
+The administrator account is created locally with `flask setup-admin`. The generated password is shown once and is never committed. The login page no longer offers an administrator demo button.
+
 ## Creating accounts
 
 Public registration creates patient accounts only.
 
-### Administrator account
+### First administrator
 
-The demonstration administrator is created by `seed-demo`. To create another administrator, run this from `backend`:
+Use the first time setup page at `/setup` or the `flask setup-admin` command. Both paths require `ADMIN_SETUP_SECRET` in the backend environment. The first successful setup creates one administrator and permanently closes the setup endpoint.
+
+If an administrator already exists, `flask setup-admin` refuses to run without `--rotate`. Rotation changes the existing account in place, so the account identifier, doctors, patients, appointments, tests, diagnoses, and prescriptions are preserved.
 
 ```powershell
 $env:FLASK_APP = "run.py"
-..\.venv\Scripts\flask.exe create-admin --email admin2@cityhospital.example
+..\.venv\Scripts\flask.exe setup-admin --rotate --email admin@example.com --generate-password
 ```
 
-The command prompts for a password. The password must be 8 to 128 characters and include at least one letter and one number. The password is hashed before storage. The new account has the `admin` role and is not linked to a patient or doctor record.
-
-This command is the controlled setup path for administrator accounts. Public registration never creates an administrator.
+The command asks for the current password, hashes the new password, and prints the new password once. Existing sessions become invalid because the stored password hash changes.
 
 ### Doctor account
 
@@ -221,7 +261,7 @@ $env:FLASK_APP = "run.py"
 ..\.venv\Scripts\flask.exe reset-demo
 ```
 
-This deletes the demonstration rows, restarts identifiers from 1, and loads a fresh data set.
+This deletes the demonstration rows, including the administrator account and the setup marker, restarts identifiers from 1, and loads a fresh data set. Run `flask setup-admin` again after a reset. This command is for a local synthetic demonstration only. Never run it against the production database.
 
 ## Documentation
 
@@ -234,15 +274,19 @@ This deletes the demonstration rows, restarts identifiers from 1, and loads a fr
 | [Demo_Guide.md](Demo_Guide.md) | Setup and a short demonstration script |
 | [Viva_Preparation.md](Viva_Preparation.md) | Questions and answers for the project viva |
 | [Project_Summary.md](Project_Summary.md) | Short submission summary |
+| [Deployment_Guide.md](Deployment_Guide.md) | Vercel, Render, Aiven, environment variables, cold starts, and production rotation |
 
 ## Known limitations
 
 The project is an educational demonstration, not a clinical system.
 
 * It has no email verification, patient password reset, or multi factor authentication.
-* Sessions use a server side Flask session cookie. There is no separate token service.
-* There is no explicit CSRF token. The app relies on `SameSite=Lax`, JSON requests, and a small allowed origin list.
-* There is no rate limiting or account lockout after repeated failed logins.
+* Sessions use a signed Flask session cookie, not a separate token service.
+* A CSRF token is required for state changing requests, but there is no rate limiting or account lockout after repeated failed logins.
+* Password changes invalidate sessions through a stored password hash fingerprint. There is no separate server side session revocation list.
+* The application sets basic security headers. It does not set a Content Security Policy or HTTP Strict Transport Security header itself. The hosting providers terminate HTTPS, and production must set `SESSION_COOKIE_SECURE=true`.
+* The free Render service spins down after inactivity, so the first request can take about one minute. The live check on 30 October 2026 observed about 37 seconds.
+* The free Aiven MySQL service has a 76 connection limit, can power off after inactivity, and has no static IP addresses.
 * Diagnostic tests store typed summaries, not scanned reports or file uploads.
 * Prescriptions store medication and treatment details as text. There is no medicine inventory.
 * There is no payment, insurance, SMS, or email integration.

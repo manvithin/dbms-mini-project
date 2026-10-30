@@ -15,11 +15,19 @@ interface RegisterPayload {
   medical_history?: string;
 }
 
+interface SetupPayload {
+  email: string;
+  password: string;
+  confirm_password: string;
+  setup_secret: string;
+}
+
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<User>;
   register: (payload: RegisterPayload) => Promise<User>;
+  setupAdmin: (payload: SetupPayload) => Promise<User>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -61,6 +69,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response.user;
   }, []);
 
+  const setupAdmin = useCallback(async (payload: SetupPayload) => {
+    const response = await api.post<{ user: User }>("/auth/setup-admin", payload);
+    setUser(response.user);
+    return response.user;
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await api.post("/auth/logout");
@@ -70,8 +84,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, login, register, logout, refresh }),
-    [user, loading, login, register, logout, refresh],
+    () => ({ user, loading, login, register, setupAdmin, logout, refresh }),
+    [user, loading, login, register, setupAdmin, logout, refresh],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

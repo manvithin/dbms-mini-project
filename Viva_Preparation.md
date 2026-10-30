@@ -28,13 +28,13 @@ Outpatient appointments and consultation records. It excludes inpatient care, ph
 ## B. Database design
 
 **Q8. How many tables are there?**
-Twelve.
+Thirteen.
 
 **Q9. Name them.**
-`patient`, `department`, `doctor`, `user_account`, `doctor_schedule`, `doctor_time_off`, `appointment`, `test_order`, `test_result`, `diagnosis`, `prescription`, and `appointment_status_history`.
+`patient`, `department`, `doctor`, `user_account`, `doctor_schedule`, `doctor_time_off`, `appointment`, `test_order`, `test_result`, `diagnosis`, `prescription`, `appointment_status_history`, and `system_setting`.
 
 **Q10. What is the primary key of each table?**
-Each table has a single integer primary key: `patient_id`, `department_id`, `doctor_id`, `user_id`, `schedule_id`, `time_off_id`, `appointment_id`, `test_id`, `result_id`, `diagnosis_id`, `prescription_id`, and `history_id`.
+Most tables have a single integer primary key: `patient_id`, `department_id`, `doctor_id`, `user_id`, `schedule_id`, `time_off_id`, `appointment_id`, `test_id`, `result_id`, `diagnosis_id`, `prescription_id`, and `history_id`. `system_setting` uses the string `setting_key` as its primary key because it stores a small set of named markers.
 
 **Q11. Why use integer surrogate keys instead of names?**
 Names can change and are not guaranteed unique. Integer keys are small, stable, and efficient for foreign keys and indexes.
@@ -252,16 +252,16 @@ Hashing is one way and is suitable for passwords. Encryption is reversible and i
 Authentication is a separate concern. Keeping it in `user_account` avoids mixing clinical and credential data and supports doctor and admin accounts with the same model.
 
 **Q80. How is the session maintained?**
-Flask stores a signed session cookie containing the user identifier. The cookie is `HttpOnly` and `SameSite=Lax`, and the session lifetime defaults to eight hours.
+Flask stores a signed session cookie containing the user identifier, a password hash fingerprint, and a CSRF token. The cookie is `HttpOnly` and `SameSite=Lax`, and the session lifetime defaults to eight hours. Production sets `SESSION_COOKIE_SECURE=true` so the cookie is sent only over HTTPS.
 
 **Q81. Is the session cookie encrypted?**
-No. It is signed to prevent tampering. It contains only the user identifier, not the password or clinical data.
+No. It is signed to prevent tampering. It contains the user identifier and security metadata, not the password or clinical data. The password hash stays in the database.
 
 **Q82. What is CSRF?**
 Cross site request forgery, where another site causes a signed in browser to send an unwanted request.
 
 **Q83. Does the project use CSRF tokens?**
-No explicit token. It relies on `SameSite=Lax`, JSON requests, and a small allowed origin list. This is a known limitation for a production system.
+Yes. The browser fetches a session bound token from `/api/auth/csrf` and sends it in the `X-CSRF-Token` header on every `POST`, `PUT`, `PATCH`, and `DELETE` request. The backend compares the header with the token in the session. A missing or wrong token returns `403 csrf_failed`. The frontend retries once after fetching a fresh token. `SameSite=Lax` remains as a second layer, not the only defence.
 
 **Q84. What is XSS?**
 Cross site scripting, where untrusted content is rendered as executable markup. React escapes text by default, and the project does not use raw HTML insertion.
@@ -280,6 +280,21 @@ No. The real `.env` file is ignored. `.env.example` contains placeholders.
 
 **Q89. What is the request size limit?**
 One megabyte, set through `MAX_CONTENT_LENGTH`.
+
+**Q89a. How is the first administrator created?**
+The seed file contains no administrator password. The first administrator is created from `/setup` or with `flask setup-admin`. Both paths require `ADMIN_SETUP_SECRET`, which is at least 16 characters and is stored only in the backend environment. The password is hashed with PBKDF2 SHA256 and 600,000 iterations. The generated password is printed once by the CLI and is never written to the database or repository.
+
+**Q89b. How does the system stop a second first time setup?**
+A successful setup writes the `admin_setup_completed` marker to `system_setting`. The setup endpoint checks the marker before reading the request and returns `409 setup_completed` after that. The migration also writes the marker when an administrator already exists. The marker stays closed even if the administrator row is later removed.
+
+**Q89c. How does a password change invalidate other sessions?**
+The session stores a SHA256 fingerprint of the current password hash. Every authenticated request compares the session fingerprint with the current database hash. A password change writes a new hash, so every old session fails the comparison, is cleared, and receives `401`. The password change route also clears the current session and asks the user to sign in again.
+
+**Q89d. Can a doctor update another doctor or change a role?**
+No. Administrator doctor routes use `role_required("admin")`, so a doctor gets `403`. The doctor self profile route allows only the `phone` field. Every other field, including `name`, `specialization`, `department_id`, `email`, and `role`, is rejected with `400 forbidden_field`. Request payloads that try to set `role`, `doctor_id`, `patient_id`, `user_id`, `is_active`, `username`, or `password_hash` are rejected before the write.
+
+**Q89e. What can a doctor change in the self profile?**
+Only the phone number. The doctor can read the name, specialization, department, sign in email, and account status, but those fields are read only. A patient cannot open the doctor profile routes at all.
 
 ## G. Backend
 
@@ -351,13 +366,15 @@ Semantic elements, labels, focus styles, keyboard handling in the modal, descrip
 ## I. Testing
 
 **Q111. How many backend tests are there?**
-Forty six.
+Sixty seven.
 
 **Q112. How many frontend tests are there?**
-Twenty nine across eight files.
+Thirty one across nine files.
 
 **Q113. What do the backend tests cover?**
-Authentication, password hashing, role isolation, directory search, availability, booking, duplicate booking, concurrent booking, cancellation, audit history, specialty reason validation, trigger and procedure presence, constraints, status transitions, clinical records, tests, results, diagnosis, prescription, pagination, validation, dashboard summary previews, and administrator management.
+Authentication, password hashing, role isolation, first time setup, setup secret rejection, setup after administrator exists, administrator credential changes, session invalidation, CSRF, cookie flags, logout, doctor self profile, forbidden role fields, directory search, availability, booking, duplicate booking, concurrent booking, cancellation, audit history, specialty reason validation, trigger and procedure presence, constraints, status transitions, clinical records, tests, results, diagnosis, prescription, pagination, validation, dashboard summary previews, and administrator management.
+
+The security file directly tests the 13 requested cases, including unauthenticated and wrong role doctor updates, administrator doctor update success, invalid credentials, invalid setup secret, setup after administrator exists, password change success, old password rejection, new password acceptance, and role change rejection.
 
 **Q114. How is concurrency tested?**
 Two threads attempt to book the same slot. The test verifies that only one appointment row exists.
@@ -369,7 +386,7 @@ To avoid destroying demonstration data and to allow repeatable fixtures.
 SQLite would not reproduce MySQL generated columns, row locks, stored procedures, or the exact constraint behaviour.
 
 **Q117. What is not tested?**
-There is no committed end to end browser suite, no load test, no cross browser matrix, and no formal accessibility audit. The known gaps are listed in the test report.
+There is no committed end to end browser suite, no load test, no cross browser matrix, and no formal accessibility audit. The new security build was not deployed to the live Vercel and Render services during the test run, and the production Aiven administrator password was not rotated. The known gaps are listed in the test report.
 
 **Q118. Can you claim zero bugs?**
 No. The documented workflows pass, but the project is an educational system with known limitations.
@@ -412,13 +429,13 @@ Vite serves the single page application and React Router renders the correct pag
 Preventing double booking reliably while keeping the code small enough to explain.
 
 **Q130. Why not use JWT?**
-A server side session is simpler for a single backend and a student project. JWT would add token storage, expiry, and refresh complexity without improving the learning value here.
+A signed session cookie is simpler for a single backend and a student project. JWT would add token storage, expiry, and refresh complexity without improving the learning value here.
 
 **Q131. Why not use Docker?**
 It would add infrastructure that the project does not need. The setup is plain MySQL, Python, and Node.
 
 **Q132. What would you improve first?**
-Add CSRF protection and rate limiting, then a committed end to end browser test suite.
+Add rate limiting and account lockout, then a Content Security Policy, a committed end to end browser test suite, and automated checks against the live deployment.
 
 **Q133. What would you add for a real hospital?**
 Audit logs for reads, role management, password reset, email verification, multi factor authentication, laboratory integration, file storage for reports, billing, and a proper medicine catalogue.
@@ -433,7 +450,7 @@ Cache schedule data, precompute slot tables for a rolling window, and keep the t
 The brief asks for an undergraduate mini project that a student can understand and explain. Extra abstractions would hide the database concepts that the project is meant to demonstrate.
 
 **Q137. How do you create an administrator or doctor account?**
-Public registration creates patients only. An administrator creates a doctor account from the **Doctors** page by entering the doctor details, login email, and temporary password. Additional administrator accounts are created with the controlled `flask create-admin` command. The command prompts for a password, hashes it, and creates an account with the `admin` role and no patient or doctor link.
+Public registration creates patients only. An administrator creates a doctor account from the **Doctors** page by entering the doctor details, login email, and temporary password. The first administrator is created from `/setup` or with `flask setup-admin`, guarded by `ADMIN_SETUP_SECRET`. The CLI hashes the password and creates an account with the `admin` role and no patient or doctor link. If an administrator already exists, `flask setup-admin --rotate` updates that account in place and preserves all clinical data.
 
 **Q138. How do the dashboard count cards stay live?**
 The administrator and doctor summary endpoints return totals together with small preview lists. The cards render those previews with real patient names, and each row links to a filtered list or the appointment record.

@@ -12,7 +12,6 @@ import { Logo } from "../components/Logo";
 const demoAccounts = [
   { role: "Patient", email: "riya.kapoor@example.com", password: "Patient@123" },
   { role: "Doctor", email: "meera.iyer@example.com", password: "Doctor@123" },
-  { role: "Administrator", email: "admin@cityhospital.example", password: "Admin@123" },
 ];
 
 export function LoginPage() {
@@ -28,6 +27,7 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const nextPath = searchParams.get("next");
+  const notice = searchParams.get("notice");
 
   useEffect(() => {
     if (user) {
@@ -81,6 +81,11 @@ export function LoginPage() {
 
         <form onSubmit={handleSubmit} noValidate className="relative mt-7 space-y-4 overflow-hidden rounded-2xl border border-line bg-white p-6 shadow-soft">
           <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-500 via-sky-400 to-rose-400" aria-hidden="true" />
+          {notice === "password-changed" ? (
+            <Alert variant="success" title="Password changed">
+              Sign in again with your new password. All earlier sessions were ended.
+            </Alert>
+          ) : null}
           {formError ? (
             <Alert variant="error" title="Sign in failed" onDismiss={() => setFormError("")}>
               {formError}
@@ -128,15 +133,20 @@ export function LoginPage() {
               Create a patient account
             </Link>
           </p>
+          <p className="text-center text-xs text-muted">
+            First time administrator?{" "}
+            <Link to="/setup" className="font-semibold text-brand-700 underline-offset-2 hover:underline">
+              Set up the administrator account
+            </Link>
+          </p>
         </form>
 
         <div className="mt-5 rounded-2xl border border-line bg-white/70 p-4">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Demo accounts</p>
-          <p className="mt-1 text-xs leading-5 text-muted">Use a synthetic account to explore each role. The password is filled in for you.</p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <p className="mt-1 text-xs leading-5 text-muted">Use a synthetic patient or doctor account to explore each role. The password is filled in for you.</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
             {demoAccounts.map((account) => {
               const isPatient = account.role === "Patient";
-              const isDoctor = account.role === "Doctor";
               return (
                 <button
                   key={account.role}
@@ -145,16 +155,14 @@ export function LoginPage() {
                   className={`rounded-xl border px-3 py-2.5 text-left text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 ${
                     isPatient
                       ? "border-brand-100 bg-brand-50 text-brand-900 hover:bg-brand-100"
-                      : isDoctor
-                        ? "border-sky-100 bg-sky-50 text-sky-900 hover:bg-sky-100"
-                        : "border-violet-100 bg-violet-50 text-violet-900 hover:bg-violet-100"
+                      : "border-sky-100 bg-sky-50 text-sky-900 hover:bg-sky-100"
                   }`}
                 >
                   <span className="flex items-center gap-1.5">
-                    {isPatient ? <HeartPulse className="h-3.5 w-3.5" aria-hidden="true" /> : isDoctor ? <Stethoscope className="h-3.5 w-3.5" aria-hidden="true" /> : <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />}
+                    {isPatient ? <HeartPulse className="h-3.5 w-3.5" aria-hidden="true" /> : <Stethoscope className="h-3.5 w-3.5" aria-hidden="true" />}
                     <span className="block text-[10px] uppercase tracking-wide opacity-80">{account.role}</span>
                   </span>
-                  <span className="mt-1 block">{account.role === "Administrator" ? "Admin login" : account.role === "Doctor" ? "Doctor login" : "Patient login"}</span>
+                  <span className="mt-1 block">{account.role} login</span>
                 </button>
               );
             })}

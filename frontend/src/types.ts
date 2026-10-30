@@ -33,6 +33,20 @@ export interface Doctor {
   account_active?: boolean;
 }
 
+export interface DoctorProfileResponse {
+  doctor: Doctor;
+}
+
+export interface SecuritySettings {
+  email: string;
+  role: Role;
+  created_at: string;
+}
+
+export interface SecuritySettingsResponse {
+  security: SecuritySettings;
+}
+
 export interface Department {
   department_id: number;
   department_name: string;

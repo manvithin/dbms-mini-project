@@ -1,12 +1,12 @@
 from datetime import datetime
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
 from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
-from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
-from .auth import get_current_user, role_required
+from .auth import ensure_csrf_token, get_current_user, role_required
 from .errors import ApiError
 from .extensions import db
 from .models import (
@@ -29,6 +29,7 @@ from .serializers import (
     serialize_pending_test,
     serialize_schedule,
     serialize_time_off,
+    serialize_user,
 )
 from .services.availability import (
     admin_can_cancel,
@@ -47,6 +48,7 @@ from .validation import (
     parse_int,
     parse_local_datetime,
     parse_time,
+    reject_forbidden_fields,
     required_text,
     validate_email,
     validate_name,
@@ -191,6 +193,124 @@ def summary():
     )
 
 
+@admin_bp.get("/security")
+@role_required("admin")
+def get_security_settings():
+    user = get_current_user()
+    return jsonify(
+        {
+            "security": {
+                "email": user.username,
+                "role": user.role,
+                "created_at": serialize_user(user)["created_at"],
+            }
+        }
+    )
+
+
+@admin_bp.patch("/security/email")
+@role_required("admin")
+def update_admin_email():
+    user = get_current_user()
+    data = json_body()
+    reject_forbidden_fields(
+        data,
+        {
+            "role",
+            "user_id",
+            "patient_id",
+            "doctor_id",
+            "is_active",
+            "username",
+            "password",
+            "password_hash",
+        },
+    )
+    current_password = data.get("current_password")
+    if not isinstance(current_password, str) or not check_password_hash(
+        user.password_hash, current_password
+    ):
+        raise ApiError(
+            "Current password is incorrect.",
+            400,
+            "invalid_current_password",
+            {"current_password": "Current password is incorrect."},
+        )
+    email = validate_email(data.get("email"))
+    duplicate = User_Account.query.filter(
+        User_Account.username == email,
+        User_Account.user_id != user.user_id,
+    ).first()
+    if duplicate is not None:
+        raise ApiError("An account with this email already exists.", 409, "duplicate_email")
+    user.username = email
+    db.session.commit()
+    return jsonify(
+        {
+            "message": "Sign in email updated.",
+            "user": serialize_user(user),
+            "csrf_token": ensure_csrf_token(),
+        }
+    )
+
+
+@admin_bp.post("/security/password")
+@role_required("admin")
+def update_admin_password():
+    user = get_current_user()
+    data = json_body()
+    reject_forbidden_fields(
+        data,
+        {
+            "role",
+            "user_id",
+            "patient_id",
+            "doctor_id",
+            "is_active",
+            "username",
+            "email",
+            "password_hash",
+        },
+    )
+    current_password = data.get("current_password")
+    if not isinstance(current_password, str) or not check_password_hash(
+        user.password_hash, current_password
+    ):
+        raise ApiError(
+            "Current password is incorrect.",
+            400,
+            "invalid_current_password",
+            {"current_password": "Current password is incorrect."},
+        )
+    new_password = validate_password(data.get("new_password"))
+    confirm_password = data.get("confirm_password")
+    if confirm_password != new_password:
+        raise ApiError(
+            "Please correct the highlighted fields.",
+            400,
+            "validation_error",
+            {"confirm_password": "Passwords do not match."},
+        )
+    if check_password_hash(user.password_hash, new_password):
+        raise ApiError(
+            "Choose a password that is different from the current password.",
+            400,
+            "same_password",
+            {"new_password": "Choose a different password."},
+        )
+    user.password_hash = generate_password_hash(new_password, method="pbkdf2:sha256:600000")
+    db.session.commit()
+    session.clear()
+    token = ensure_csrf_token()
+    return jsonify(
+        {
+            "message": "Password changed. Sign in again with the new password.",
+            "reauthentication_required": True,
+            "csrf_token": token,
+        }
+    )
+
+
 @admin_bp.get("/departments")
 @role_required("admin")
 def list_departments():
@@ -202,6 +322,7 @@ def list_departments():
 @role_required("admin")
 def create_department():
     data = json_body()
+    reject_forbidden_fields(data, {"role", "user_id", "patient_id", "doctor_id", "is_active"})
     name = required_text(data, "department_name", "Department name", min_length=2, max_length=100)
     description = optional_text(data, "description", "Description", max_length=2000)
     if Department.query.filter(func.lower(Department.department_name) == name.lower()).first():
@@ -226,6 +347,7 @@ def update_department(department_id):
     if department is None:
         raise ApiError("Department not found.", 404, "not_found")
     data = json_body()
+    reject_forbidden_fields(data, {"role", "user_id", "patient_id", "doctor_id", "is_active"})
     if "department_name" in data:
         name = required_text(data, "department_name", "Department name", min_length=2, max_length=100)
         duplicate = Department.query.filter(
@@ -270,6 +392,10 @@ def list_doctors():
 @role_required("admin")
 def create_doctor():
     data = json_body()
+    reject_forbidden_fields(
+        data,
+        {"role", "user_id", "patient_id", "doctor_id", "is_active", "account_active", "password_hash"},
+    )
     name = validate_name(data.get("name"))
     specialization = required_text(data, "specialization", "Specialization", min_length=2, max_length=120)
     phone = validate_phone(data.get("phone"))
@@ -325,6 +451,10 @@ def update_doctor(doctor_id):
     if doctor is None:
         raise ApiError("Doctor not found.", 404, "not_found")
     data = json_body()
+    reject_forbidden_fields(
+        data,
+        {"role", "user_id", "patient_id", "doctor_id", "username", "email", "password", "password_hash"},
+    )
     if "name" in data:
         doctor.name = validate_name(data.get("name"))
     if "specialization" in data:
@@ -366,6 +496,7 @@ def reset_doctor_password(doctor_id):
     if doctor.account is None:
         raise ApiError("This doctor has no login account.", 400, "missing_account")
     data = json_body()
+    reject_forbidden_fields(data, {"role", "user_id", "patient_id", "doctor_id", "username", "email", "password_hash"})
     password = validate_password(data.get("new_password"))
     doctor.account.password_hash = generate_password_hash(password, method="pbkdf2:sha256:600000")
     db.session.commit()
@@ -396,6 +527,7 @@ def list_schedules():
 @role_required("admin")
 def create_schedule():
     data = json_body()
+    reject_forbidden_fields(data, {"role", "user_id", "patient_id", "password", "password_hash"})
     doctor_id = parse_int(data.get("doctor_id"), "doctor_id", "Doctor")
     day = parse_int(data.get("day_of_week"), "day_of_week", "Day", minimum=0, maximum=6)
     start_time = parse_time(data.get("start_time"), "start_time", "Start time")
@@ -445,6 +577,7 @@ def update_schedule(schedule_id):
     if schedule is None:
         raise ApiError("Schedule not found.", 404, "not_found")
     data = json_body()
+    reject_forbidden_fields(data, {"role", "user_id", "patient_id", "password", "password_hash"})
     if "day_of_week" in data:
         schedule.day_of_week = parse_int(
             data.get("day_of_week"), "day_of_week", "Day", minimum=0, maximum=6
@@ -513,6 +646,7 @@ def list_time_off():
 @role_required("admin")
 def create_time_off():
     data = json_body()
+    reject_forbidden_fields(data, {"role", "user_id", "patient_id", "password", "password_hash"})
     doctor_id = parse_int(data.get("doctor_id"), "doctor_id", "Doctor")
     start_datetime = parse_local_datetime(data.get("start_datetime"), "start_datetime", "Start time")
     end_datetime = parse_local_datetime(data.get("end_datetime"), "end_datetime", "End time")

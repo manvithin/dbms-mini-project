@@ -6,6 +6,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { HomePage } from "./pages/HomePage";
 import { DoctorDetailPage } from "./pages/DoctorDetailPage";
 import { LoginPage, RegisterPage } from "./pages/AuthPages";
+import { SetupPage } from "./pages/SetupPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { PatientOverviewPage } from "./pages/patient/PatientOverviewPage";
 import { BookAppointmentPage } from "./pages/patient/BookAppointmentPage";
@@ -15,8 +16,10 @@ import { PatientRecordsPage } from "./pages/patient/PatientRecordsPage";
 import { PatientProfilePage } from "./pages/patient/PatientProfilePage";
 import { DoctorDashboardPage } from "./pages/doctor/DoctorDashboardPage";
 import { DoctorAppointmentsPage } from "./pages/doctor/DoctorAppointmentsPage";
+import { DoctorProfilePage } from "./pages/doctor/DoctorProfilePage";
 import { ConsultationPage } from "./pages/doctor/ConsultationPage";
 import { AdminDashboardPage } from "./pages/admin/AdminDashboardPage";
+import { AdminSecurityPage } from "./pages/admin/AdminSecurityPage";
 import { AdminDoctorsPage } from "./pages/admin/AdminDoctorsPage";
 import { AdminDepartmentsPage } from "./pages/admin/AdminDepartmentsPage";
 import { AdminSchedulesPage } from "./pages/admin/AdminSchedulesPage";
@@ -36,6 +39,7 @@ export default function App() {
         <Route path="doctors/:doctorId" element={<DoctorDetailPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
+        <Route path="setup" element={<SetupPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 
@@ -87,6 +91,7 @@ export default function App() {
         <Route index element={<DoctorDashboardPage />} />
         <Route path="appointments" element={<DoctorAppointmentsPage />} />
         <Route path="appointments/:appointmentId" element={<ConsultationPage />} />
+        <Route path="profile" element={<DoctorProfilePage />} />
       </Route>
 
       <Route
@@ -104,6 +109,7 @@ export default function App() {
         <Route path="time-off" element={<AdminTimeOffPage />} />
         <Route path="appointments" element={<AdminAppointmentsPage />} />
         <Route path="appointments/:appointmentId" element={<AdminAppointmentDetailPage />} />
+        <Route path="security" element={<AdminSecurityPage />} />
       </Route>
     </Routes>
   );
