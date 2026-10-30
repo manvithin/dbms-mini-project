@@ -16,11 +16,14 @@ The live check on 30 October 2026 found:
 
 * The Render health endpoint returned `200` with `{"status":"ok","service":"hospital outpatient api"}`.
 * The Render departments endpoint returned the six synthetic departments.
-* The Vercel site still served the older frontend build. The login page still showed the public administrator demo button.
+* The Render setup status endpoint returned `200` with `{"setup_required":false,"setup_completed":true,"setup_available":false,"admin_exists":true}`.
+* The Vercel site served the current frontend build. The login page no longer showed the administrator demo button, and the footer no longer showed the standalone synthetic data line.
+* The Vercel `/setup` page showed "Setup is already complete".
 * The live API calls took about 37 seconds on the first page load. This is consistent with a Render free service cold start.
+* The Aiven database still lacks the `system_setting` table. The backend fallback closes setup when an administrator row exists.
 * The production administrator password has not been rotated from the old public demonstration password. The local development password was rotated, but that does not change Aiven.
 
-The new frontend must be redeployed and the production administrator must be rotated before the public site is treated as updated. Do not describe the live site as fixed until those two steps are complete and verified.
+Run `flask db upgrade` against Aiven to create `system_setting`, then rotate the production administrator. The public site can serve requests in the current state, but the setup marker and the production password still need attention.
 
 ## 2. Required production environment variables
 
@@ -100,7 +103,7 @@ $env:FLASK_APP = "run.py"
 ..\.venv\Scripts\flask.exe check-db
 ```
 
-For an existing database with clinical data, run only `flask db upgrade`. The administrator setup migration creates `system_setting` and marks setup complete when an administrator already exists. It does not delete or rewrite doctors, patients, appointments, tests, diagnoses, or prescriptions.
+For an existing database with clinical data, run only `flask db upgrade`. The administrator setup migration creates `system_setting` and marks setup complete when an administrator already exists. It does not delete or rewrite doctors, patients, appointments, tests, diagnoses, or prescriptions. Until this migration runs, the backend fallback closes setup when an administrator row exists. Run the migration as soon as possible so the marker is explicit.
 
 Never run `flask reset-demo` against Aiven. That command deletes the synthetic rows, the administrator account, and the setup marker. It is a local demonstration command only.
 

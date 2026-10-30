@@ -62,7 +62,7 @@ The visual system includes synthetic doctor portraits, department illustrations,
 
 | Check | Result |
 | --- | --- |
-| Backend tests | 67 passed |
+| Backend tests | 69 passed |
 | Frontend tests | 31 passed across 9 files |
 | Production build | Passed |
 | Administrator setup migration | Applied, clinical counts unchanged |

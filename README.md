@@ -12,7 +12,7 @@ The application is implemented and verified in this workspace.
 
 | Check | Result |
 | --- | --- |
-| Backend tests | 67 passed |
+| Backend tests | 69 passed |
 | Frontend tests | 31 passed across 9 files |
 | Production build | Passed |
 | Administrator setup migration | Applied without changing clinical data |
@@ -29,7 +29,7 @@ The live demonstration is split across three free services:
 | Backend API | Render | `https://dbms-mini-project-ybmr.onrender.com` |
 | Database | Aiven MySQL 8.4 | Private Aiven service |
 
-The live frontend still served the older build when this report was written. The new security build must be redeployed, and the production administrator password must be rotated before the public demonstration is treated as updated. See [Deployment_Guide.md](Deployment_Guide.md).
+The live frontend now serves the security build. The live setup page reports that setup is already complete, and the login page no longer offers an administrator demo account. The live API includes a compatibility fallback for the missing `system_setting` table, but the Aiven migration should still be applied. The production administrator password has not yet been rotated. See [Deployment_Guide.md](Deployment_Guide.md).
 
 ## Roles
 

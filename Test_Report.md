@@ -4,7 +4,7 @@
 
 | Check | Command | Result | Recorded on |
 | --- | --- | --- | --- |
-| Backend test suite | `..\.venv\Scripts\python.exe -m pytest -q` | 67 passed in 143.71 seconds | 30 October 2026 |
+| Backend test suite | `..\.venv\Scripts\python.exe -m pytest -q` | 69 passed in 138.60 seconds | 30 October 2026 |
 | Frontend test suite | `npm test` | 31 passed across 9 files | 30 October 2026 |
 | Production build | `npm run build` | Passed in 7.40 seconds | 30 October 2026 |
 | Administrator setup migration | `flask db upgrade` | Applied, clinical counts unchanged | 30 October 2026 |
@@ -40,8 +40,8 @@ Command, from `backend`:
 Output:
 
 ```text
-...................................................................      [100%]
-67 passed in 143.71s (0:02:23)
+.....................................................................      [100%]
+69 passed in 138.60s (0:02:18)
 ```
 
 ### 3.1 Authentication and access control
@@ -136,6 +136,8 @@ These tests use the real Flask test client, the MySQL test database, and the CSR
 | `test_setup_is_rejected_after_an_administrator_exists` | Setup after an administrator exists returns `409 setup_completed` |
 | `test_first_time_setup_creates_one_administrator_and_closes_setup` | Setup hashes the password, writes the marker, and rejects a second setup |
 | `test_setup_marker_stays_closed_after_administrator_is_removed` | The marker stays closed even if the administrator row is removed |
+| `test_setup_status_falls_back_when_system_setting_table_is_missing` | Setup status returns `200` when an older database lacks `system_setting` |
+| `test_setup_admin_succeeds_when_system_setting_table_is_missing` | First administrator setup succeeds and keeps the administrator account when the marker table is missing |
 | `test_administrator_password_change_requires_current_password` | A wrong current password returns `400 invalid_current_password` |
 | `test_administrator_password_change_invalidates_the_session` | The current session ends, the old password fails, and the new password works |
 | `test_administrator_can_change_the_sign_in_email` | The old email stops working and the new email signs in |
@@ -383,6 +385,21 @@ These checks were run in the local browser against Flask on port 5001 and Vite o
 | Doctor phone update with an invalid value returns `400` and shows a field error | Passed |
 | Doctor phone is restored to the original value | Passed |
 
+### 7.8 Live deployment check after the setup fallback
+
+The live check on 30 October 2026 confirmed:
+
+| Check | Result |
+| --- | --- |
+| Render health endpoint returns `200` | Passed |
+| Render `/api/auth/setup-status` returns `200` with `setup_required: false`, `setup_completed: true`, and `admin_exists: true` | Passed |
+| Vercel `/setup` shows "Setup is already complete" | Passed |
+| Vercel login page no longer shows an administrator demo account | Passed |
+| Vercel footer no longer shows the standalone synthetic data line | Passed |
+| Live frontend asset matches the local production build | Passed |
+
+The Aiven database still lacks the `system_setting` table, so the backend fallback is what keeps setup closed. Apply the migration to make the marker explicit. The production administrator password rotation is still pending.
+
 ## 8. Screenshot evidence
 
 The following final screenshots are stored in `screenshots/`:
@@ -417,7 +434,8 @@ The project does not claim complete coverage or zero defects.
 * There is no automated visual regression test for the screenshots.
 * The project does not test every possible invalid input combination. The main validation and permission paths are covered.
 * Session behaviour with multiple backend instances was not tested.
-* The live Vercel build and the live Render backend were checked for availability, but the new security build was not deployed during this test run.
+* The live Vercel build and the live Render backend were rechecked on 30 October 2026. The setup status endpoint returned `200`, and the live setup page reported setup complete.
+* The Aiven `system_setting` migration has not been applied. The backend fallback uses the administrator row to keep setup closed until the migration is run.
 * The production Aiven administrator password was not rotated during this test run. Only the local development administrator was rotated.
 * Render cold starts and Aiven free plan limits were observed and documented, but no uptime guarantee is claimed.
 * The security tests prove the API permission cases. They do not prove that every browser or proxy configuration is safe.

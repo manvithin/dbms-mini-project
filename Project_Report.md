@@ -326,7 +326,7 @@ The interface provides loading skeletons, empty states, inline validation, succe
 
 | Suite | Result |
 | --- | --- |
-| Backend Pytest | 67 passed in 143.71 seconds |
+| Backend Pytest | 69 passed in 138.60 seconds |
 | Frontend Vitest | 31 passed across 9 files |
 | TypeScript and Vite build | Passed in 7.40 seconds |
 
@@ -379,7 +379,7 @@ The finished system supports the complete outpatient workflow with real database
 * CSRF protection is implemented, but there is no Content Security Policy or HTTP Strict Transport Security header from Flask. HTTPS is provided by the hosting platforms.
 * Sessions are stored in Flask signed cookies, so this setup assumes a single backend instance. Password changes invalidate sessions through a hash fingerprint, but there is no separate server side session revocation list.
 * The free Render service spins down after inactivity, so the first request can take about one minute. The free Aiven MySQL service has a 76 connection limit and can power off after inactivity.
-* The production administrator password must be rotated after the new backend is deployed. The local rotation does not change Aiven.
+* The production administrator password still must be rotated. The local rotation does not change Aiven. The Aiven `system_setting` migration is also still pending.
 * Diagnostic reports are typed summaries. Files and scanned reports are not supported.
 * Prescriptions are free text. There is no medicine catalogue, stock, or interaction checking.
 * There is no billing, insurance, SMS, or email integration.

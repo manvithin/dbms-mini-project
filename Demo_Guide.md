@@ -186,7 +186,7 @@ Then run:
 ..\.venv\Scripts\python.exe -m pytest -q
 ```
 
-Show the passing backend suite. The current result is 67 passed. If time is short, show the recorded result in [Test_Report.md](Test_Report.md).
+Show the passing backend suite. The current result is 69 passed. If time is short, show the recorded result in [Test_Report.md](Test_Report.md).
 
 Point out the security tests in `backend/tests/test_security.py`. They prove that a signed out user gets `401` on a doctor update, a patient and a doctor get `403` on administrator endpoints, a doctor cannot update another doctor, an administrator can update a doctor, a role change in a request body is rejected, first time setup requires the secret and closes permanently, and a password change ends the old session and the old password.
 

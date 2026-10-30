@@ -386,7 +386,7 @@ To avoid destroying demonstration data and to allow repeatable fixtures.
 SQLite would not reproduce MySQL generated columns, row locks, stored procedures, or the exact constraint behaviour.
 
 **Q117. What is not tested?**
-There is no committed end to end browser suite, no load test, no cross browser matrix, and no formal accessibility audit. The new security build was not deployed to the live Vercel and Render services during the test run, and the production Aiven administrator password was not rotated. The known gaps are listed in the test report.
+There is no committed end to end browser suite, no load test, no cross browser matrix, and no formal accessibility audit. The security build is deployed to the live Vercel and Render services. The Aiven `system_setting` migration and the production administrator password rotation are still pending. The known gaps are listed in the test report.
 
 **Q118. Can you claim zero bugs?**
 No. The documented workflows pass, but the project is an educational system with known limitations.
