@@ -5,7 +5,7 @@
 | Check | Command | Result | Recorded on |
 | --- | --- | --- | --- |
 | Backend test suite | `..\.venv\Scripts\python.exe -m pytest -q` | 46 passed in 93.75 seconds | 30 October 2026 |
-| Frontend test suite | `npm test` | 28 passed across 8 files | 30 October 2026 |
+| Frontend test suite | `npm test` | 29 passed across 8 files | 30 October 2026 |
 | Production build | `npm run build` | Passed | 30 October 2026 |
 | Database object check | `flask check-db` | Trigger present, procedure present | 29 October 2026 |
 | Demo data reset | `flask reset-demo` | Passed | 29 October 2026 |
@@ -130,8 +130,8 @@ Output:
 
 ```text
  Test Files  8 passed (8)
-      Tests  28 passed (28)
-   Duration  6.36s
+      Tests  29 passed (29)
+   Duration  5.32s
 ```
 
 ### 4.1 Test files
@@ -144,7 +144,7 @@ Output:
 | `src/components/ClinicalRecord.test.tsx` | 3 | Empty record, full record, compact mode |
 | `src/components/Pagination.test.tsx` | 2 | Range display and hidden state |
 | `src/components/Button.test.tsx` | 3 | Click, loading, disabled |
-| `src/components/Modal.test.tsx` | 3 | Dialog confirm, cancel and Escape, closed state |
+| `src/components/Modal.test.tsx` | 4 | Dialog confirm, cancel and Escape, closed state, focus while typing |
 | `src/utils/reasonGuidance.test.ts` | 5 | Specialty guidance, whole word matching, and mismatch messages |
 
 ### 4.2 Frontend test names
@@ -308,6 +308,7 @@ These checks were run with a Playwright script against the running application a
 | Back controls return to the parent page or role landing page | Passed |
 | A booking reason that belongs to another specialty is blocked | Passed |
 | A booking reason that matches the specialty enables confirmation | Passed |
+| Test result modal keeps focus and accepts the full text while typing | Passed |
 | Patient overview cards open the appointment list and record list | Passed |
 | Doctor card previews open an appointment record | Passed |
 | Administrator patient preview opens the filtered appointment register | Passed |
@@ -335,6 +336,7 @@ The following final screenshots are stored in `screenshots/`:
 | `10-mobile-home.png` | Mobile home page |
 | `11-doctor-detail.png` | Doctor detail with open slots |
 | `12-booking-reason-guidance.png` | Booking reason blocked because it belongs to another specialty |
+| `13-test-result-modal.png` | Test result modal with fully typed summary and remarks |
 
 The capture run reported six `401` responses for `/api/auth/me` on public pages. These are expected because the application checks whether a visitor has a session. There were no 404 responses and no page errors in the final run.
 

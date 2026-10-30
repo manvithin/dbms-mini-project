@@ -317,12 +317,12 @@ The interface provides loading skeletons, empty states, inline validation, succe
 | Suite | Result |
 | --- | --- |
 | Backend Pytest | 46 passed in 93.75 seconds |
-| Frontend Vitest | 28 passed across 8 files |
+| Frontend Vitest | 29 passed across 8 files |
 | TypeScript and Vite build | Passed |
 
 Backend tests cover authentication, password hashing, role isolation, public directory search, availability, booking, duplicate booking, concurrent booking, cancellation, slot release, specialty reason validation, trigger history, stored procedure presence, unique slot constraint, check constraint, status transitions, clinical record rules, tests, results, diagnosis, prescription, pagination, validation, dashboard summary previews, and administrator management.
 
-Frontend tests cover formatting, protected routes, API loading and failure behaviour, clinical record rendering, pagination, button states, modal behaviour, and specialty reason guidance.
+Frontend tests cover formatting, protected routes, API loading and failure behaviour, clinical record rendering, pagination, button states, modal behaviour, focus stability while typing, and specialty reason guidance.
 
 ### Manual acceptance
 

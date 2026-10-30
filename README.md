@@ -13,7 +13,7 @@ The application is implemented and verified in this workspace.
 | Check | Result |
 | --- | --- |
 | Backend tests | 46 passed |
-| Frontend tests | 28 passed across 8 files |
+| Frontend tests | 29 passed across 8 files |
 | Production build | Passed |
 | Demo data reset | Passed |
 | Database object check | Trigger and procedure present |

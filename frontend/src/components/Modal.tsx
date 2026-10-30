@@ -23,19 +23,23 @@ export function Modal({
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const descriptionId = useId();
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) return;
     const previous = document.activeElement as HTMLElement | null;
     const panel = panelRef.current;
-    const focusable = panel?.querySelector<HTMLElement>(
-      "input, select, textarea, button:not([disabled]), a[href]",
-    );
-    focusable?.focus();
+    const formControl = panel?.querySelector<HTMLElement>("input, select, textarea");
+    const firstAction = panel?.querySelector<HTMLElement>("button:not([disabled]), a[href]");
+    (formControl ?? firstAction)?.focus();
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key !== "Tab" || !panel) return;
@@ -64,7 +68,7 @@ export function Modal({
       document.body.style.overflow = overflow;
       previous?.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 

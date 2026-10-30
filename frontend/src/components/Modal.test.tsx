@@ -1,9 +1,20 @@
+import { useState } from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { ConfirmDialog } from "./Modal";
+import { ConfirmDialog, Modal } from "./Modal";
 
-describe("ConfirmDialog", () => {
+function TypingHarness() {
+  const [summary, setSummary] = useState("");
+  return (
+    <Modal open onClose={() => undefined} title="Record test result">
+      <label htmlFor="result-summary">Result summary</label>
+      <textarea id="result-summary" value={summary} onChange={(event) => setSummary(event.target.value)} />
+    </Modal>
+  );
+}
+
+describe("Modal dialogs", () => {
   it("renders an accessible dialog and confirms the action", async () => {
     const user = userEvent.setup();
     const onConfirm = vi.fn();
@@ -57,5 +68,17 @@ describe("ConfirmDialog", () => {
       />,
     );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("keeps focus while a controlled field is edited", async () => {
+    const user = userEvent.setup();
+    render(<TypingHarness />);
+
+    const field = screen.getByLabelText("Result summary");
+    await user.click(field);
+    await user.keyboard("Normal chest X ray");
+
+    expect(field).toHaveValue("Normal chest X ray");
+    expect(field).toHaveFocus();
   });
 });

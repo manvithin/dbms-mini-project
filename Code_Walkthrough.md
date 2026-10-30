@@ -366,7 +366,7 @@ This removes repeated request boilerplate from pages.
 | `PageHeader` | Page title, description, actions, and the shared back button, which landing pages disable |
 | `Card` | Consistent surface and spacing |
 | `Form` | Labels, fields, errors, layout |
-| `Modal` | Accessible dialog with Escape and focus handling |
+| `Modal` | Accessible dialog with Escape and focus handling, including stable focus while typing |
 | `Pagination` | Page controls and counts |
 | `StatusBadge` | Colour per appointment or test status |
 | `StatusTimeline` | Appointment audit history |

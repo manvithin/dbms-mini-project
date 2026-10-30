@@ -354,7 +354,7 @@ Semantic elements, labels, focus styles, keyboard handling in the modal, descrip
 Forty six.
 
 **Q112. How many frontend tests are there?**
-Twenty eight across eight files.
+Twenty nine across eight files.
 
 **Q113. What do the backend tests cover?**
 Authentication, password hashing, role isolation, directory search, availability, booking, duplicate booking, concurrent booking, cancellation, audit history, specialty reason validation, trigger and procedure presence, constraints, status transitions, clinical records, tests, results, diagnosis, prescription, pagination, validation, dashboard summary previews, and administrator management.
