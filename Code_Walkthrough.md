@@ -89,10 +89,11 @@ with:
 1. Checks that the user is a patient.
 2. Parses the doctor identifier, date, time, and reason.
 3. Loads the doctor and checks that the doctor is active.
-4. Rejects a past date.
-5. Recalculates availability and rejects a slot that is no longer open.
-6. Calls `db.session.rollback()` to end the read transaction.
-7. Calls `book_appointment()` in `backend/app/services/booking.py`.
+4. Checks that the reason fits the doctor specialty with `reason_guidance.py`.
+5. Rejects a past date.
+6. Recalculates availability and rejects a slot that is no longer open.
+7. Calls `db.session.rollback()` to end the read transaction.
+8. Calls `book_appointment()` in `backend/app/services/booking.py`.
 
 ### Step 4: The stored procedure owns the write
 
@@ -217,6 +218,18 @@ Calls the procedure and maps messages to HTTP errors:
 | `This slot is no longer available...` | 409 `slot_conflict` |
 | `The doctor is unavailable at this time.` | 409 `doctor_unavailable` |
 | Other business failures | 400 `booking_failed` |
+
+### `app/services/reason_guidance.py`
+
+Holds the specialty reason rules:
+
+| Item | Purpose |
+| --- | --- |
+| `SPECIALTY_REASON_RULES` | Topic, examples, and keywords for each department |
+| `_matches()` | Whole word match, so `ear` does not match `heart` |
+| `reason_mismatch()` | Returns a guidance message when a reason belongs to another department |
+
+The frontend mirrors the same rules in `src/utils/reasonGuidance.ts` so the form can show examples and an inline message before the request is sent. The backend remains authoritative and returns HTTP 422 with the code `reason_mismatch`.
 | Database duplicate or lock error | 409 `slot_conflict` |
 
 ### `app/public.py`

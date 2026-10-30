@@ -289,7 +289,7 @@ Key screens:
 * Public home page with departments, featured doctors, and care information.
 * Doctor directory and doctor detail page with clinic hours and live slots.
 * Patient overview with next appointment, quick actions, recent visits, and live visit and record cards.
-* Booking page with doctor, date, and slot selection.
+* Booking page with doctor, date, slot, and specialty aware visit reason.
 * Patient records and appointment detail with clinical timeline.
 * Doctor dashboard with today counts, live patient previews, and upcoming visits.
 * Consultation workspace with status controls, tests, diagnosis, and prescription.
@@ -297,6 +297,8 @@ Key screens:
 * Print layouts for confirmation, record, tests, and history.
 
 The public home page, sign in page, registration page, and the three role landing pages do not show a back control. Subpages use the shared page header button on signed in pages, the public layout button on public subpages, or a contextual link back to their parent list. The print layout provides its own back button.
+
+The booking form shows examples for the selected specialty and blocks a reason that clearly belongs to another department. The server repeats the check so a direct API request cannot bypass it. General Medicine accepts any reason because it is the first contact department.
 
 The dashboard cards are data driven. Administrator and doctor cards list real patient names and link to filtered appointment lists or individual records. Patient cards show the next visit and the latest clinical record. Empty cards explain that no matching records exist.
 
@@ -314,13 +316,13 @@ The interface provides loading skeletons, empty states, inline validation, succe
 
 | Suite | Result |
 | --- | --- |
-| Backend Pytest | 42 passed in 84.89 seconds |
-| Frontend Vitest | 23 passed across 7 files |
+| Backend Pytest | 46 passed in 93.75 seconds |
+| Frontend Vitest | 28 passed across 8 files |
 | TypeScript and Vite build | Passed |
 
-Backend tests cover authentication, password hashing, role isolation, public directory search, availability, booking, duplicate booking, concurrent booking, cancellation, slot release, trigger history, stored procedure presence, unique slot constraint, check constraint, status transitions, clinical record rules, tests, results, diagnosis, prescription, pagination, validation, dashboard summary previews, and administrator management.
+Backend tests cover authentication, password hashing, role isolation, public directory search, availability, booking, duplicate booking, concurrent booking, cancellation, slot release, specialty reason validation, trigger history, stored procedure presence, unique slot constraint, check constraint, status transitions, clinical record rules, tests, results, diagnosis, prescription, pagination, validation, dashboard summary previews, and administrator management.
 
-Frontend tests cover formatting, protected routes, API loading and failure behaviour, clinical record rendering, pagination, button states, and modal behaviour.
+Frontend tests cover formatting, protected routes, API loading and failure behaviour, clinical record rendering, pagination, button states, modal behaviour, and specialty reason guidance.
 
 ### Manual acceptance
 
@@ -332,6 +334,7 @@ The following workflows were checked in a real browser against the running appli
 * Administrator sign in, dashboard, department creation, doctor creation, schedule management, time off, appointment filtering, and cancellation.
 * Role isolation between patient, doctor, and administrator routes.
 * Back navigation hidden on the public home, sign in, registration, and role landing pages, and present on subpages, detail pages, and print pages.
+* Specialty aware visit reason guidance and server validation on the booking form.
 * Live dashboard cards with real patient previews and links to filtered lists or records.
 * Empty, loading, success, validation, and failure states.
 

@@ -351,13 +351,13 @@ Semantic elements, labels, focus styles, keyboard handling in the modal, descrip
 ## I. Testing
 
 **Q111. How many backend tests are there?**
-Forty two.
+Forty six.
 
 **Q112. How many frontend tests are there?**
-Twenty three across seven files.
+Twenty eight across eight files.
 
 **Q113. What do the backend tests cover?**
-Authentication, password hashing, role isolation, directory search, availability, booking, duplicate booking, concurrent booking, cancellation, audit history, trigger and procedure presence, constraints, status transitions, clinical records, tests, results, diagnosis, prescription, pagination, validation, dashboard summary previews, and administrator management.
+Authentication, password hashing, role isolation, directory search, availability, booking, duplicate booking, concurrent booking, cancellation, audit history, specialty reason validation, trigger and procedure presence, constraints, status transitions, clinical records, tests, results, diagnosis, prescription, pagination, validation, dashboard summary previews, and administrator management.
 
 **Q114. How is concurrency tested?**
 Two threads attempt to book the same slot. The test verifies that only one appointment row exists.
@@ -440,3 +440,6 @@ The administrator and doctor summary endpoints return totals together with small
 
 **Q139. How is back navigation handled on every page?**
 A shared `BackButton` uses browser history when it exists and falls back to the role home or the public home page. It is hidden on the public home page, sign in page, registration page, and the three role landing pages, so users do not leave a home page through a back control. Subpages show it through the shared page header or the public layout, detail pages keep a contextual back link, and the print layout has its own back button.
+
+**Q140. How does the booking form stop a reason from going to the wrong specialty?**
+Each department has a rule with a topic, examples, and keywords in `reason_guidance.py`. The booking form mirrors the rule to show examples and an inline message. The backend repeats the check before availability and booking, so a direct API request cannot bypass it. Matching uses whole words, so `ear` does not match `heart`. General Medicine has no rule and accepts any reason.

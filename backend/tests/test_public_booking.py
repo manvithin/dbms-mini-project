@@ -80,6 +80,67 @@ def test_patient_can_book_an_available_slot(client, app, seeded):
         assert saved.reason_for_visit == "Persistent cough and mild fever."
 
 
+def test_booking_rejects_a_reason_for_another_specialty(client, app, seeded):
+    login(client, "riya@example.com", "Patient@123")
+    response = client.post(
+        "/api/appointments",
+        json={
+            "doctor_id": seeded["doctor_b_id"],
+            "appointment_date": seeded["future_date"],
+            "appointment_time": "10:00",
+            "reason_for_visit": "Acne and hair loss.",
+        },
+    )
+    assert response.status_code == 422
+    body = response.get_json()
+    assert body["code"] == "reason_mismatch"
+    assert "Dermatology" in body["fields"]["reason_for_visit"]
+    with app.app_context():
+        count = Appointment.query.filter_by(
+            doctor_id=seeded["doctor_b_id"],
+            appointment_date=date.fromisoformat(seeded["future_date"]),
+            appointment_time=time(10, 0),
+        ).count()
+        assert count == 0
+
+
+def test_booking_accepts_a_matching_specialty_reason(client, seeded):
+    login(client, "riya@example.com", "Patient@123")
+    response = client.post(
+        "/api/appointments",
+        json={
+            "doctor_id": seeded["doctor_b_id"],
+            "appointment_date": seeded["future_date"],
+            "appointment_time": "10:00",
+            "reason_for_visit": "Chest pain and palpitations.",
+        },
+    )
+    assert response.status_code == 201
+
+
+def test_general_medicine_accepts_a_reason_from_another_specialty(client, seeded):
+    login(client, "riya@example.com", "Patient@123")
+    response = client.post(
+        "/api/appointments",
+        json={
+            "doctor_id": seeded["doctor_a_id"],
+            "appointment_date": seeded["future_date"],
+            "appointment_time": "10:00",
+            "reason_for_visit": "Skin rash and hair loss.",
+        },
+    )
+    assert response.status_code == 201
+
+
+def test_reason_guidance_matches_whole_words():
+    from app.services.reason_guidance import reason_mismatch
+
+    assert reason_mismatch("Ear Nose and Throat", "Hearing loss for two weeks") is None
+    assert reason_mismatch("Ear Nose and Throat", "Heart check") is not None
+    assert reason_mismatch("General Medicine", "Acne") is None
+    assert reason_mismatch("Cardiology", "High blood pressure review") is None
+
+
 def test_duplicate_booking_is_rejected_without_a_second_row(client, app, seeded):
     login(client, "riya@example.com", "Patient@123")
     payload = {

@@ -29,6 +29,7 @@ from .services.availability import (
     patient_can_cancel,
 )
 from .services.booking import book_appointment
+from .services.reason_guidance import reason_mismatch
 from .validation import (
     json_body,
     optional_text,
@@ -236,6 +237,11 @@ def create_appointment():
         raise ApiError("Doctor not found.", 404, "not_found")
     if not doctor.is_active:
         raise ApiError("This doctor is not accepting appointments.", 400, "doctor_inactive")
+
+    department_name = doctor.department.department_name if doctor.department else None
+    mismatch = reason_mismatch(department_name, reason)
+    if mismatch:
+        raise ApiError(mismatch, 422, "reason_mismatch", {"reason_for_visit": mismatch})
 
     now = hospital_now()
     if appointment_date < now.date():

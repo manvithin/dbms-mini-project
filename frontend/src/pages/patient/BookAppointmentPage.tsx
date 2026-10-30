@@ -22,6 +22,7 @@ import { PageHeader } from "../../components/PageHeader";
 import { Skeleton } from "../../components/Skeleton";
 import { formatDateLong, formatTime, parseDateOnly, todayISO } from "../../utils/format";
 import { departmentVisual } from "../../utils/visuals";
+import { reasonGuidanceFor, reasonMismatch } from "../../utils/reasonGuidance";
 
 function nextDays(count: number) {
   const today = parseDateOnly(todayISO());
@@ -77,6 +78,8 @@ export function BookAppointmentPage() {
   });
   const selectedDoctor = doctorState.data?.doctor ?? doctors.find((item) => String(item.doctor_id) === doctorId);
   const availability = availabilityState.data;
+  const reasonGuidance = reasonGuidanceFor(selectedDoctor?.department_name);
+  const reasonError = reasonMismatch(selectedDoctor?.department_name, reason);
 
   useEffect(() => {
     if (doctorId && availabilityState.data && !availabilityState.data.slots.some((slot) => slot.start_time === time)) {
@@ -104,6 +107,7 @@ export function BookAppointmentPage() {
     if (!date) errors.appointment_date = "Choose a date.";
     if (!time) errors.appointment_time = "Choose an available time.";
     if (!reason.trim()) errors.reason_for_visit = "Tell the care team why you are visiting.";
+    else if (reasonError) errors.reason_for_visit = reasonError;
     setFieldErrors(errors);
     setFormError("");
     if (Object.keys(errors).length > 0) return;
@@ -127,8 +131,10 @@ export function BookAppointmentPage() {
           setTime("");
           availabilityState.reload();
         }
+        if (error.code !== "reason_mismatch") setFormError(errorMessage(error));
+      } else {
+        setFormError(errorMessage(error));
       }
-      setFormError(errorMessage(error));
     } finally {
       setSubmitting(false);
     }
@@ -320,17 +326,37 @@ export function BookAppointmentPage() {
                 </div>
               </div>
               <div className="mt-5">
-                <Field label="Reason for visit" htmlFor="booking-reason" error={fieldErrors.reason_for_visit} required hint="For example: recurring headaches, medicine review, or a skin concern.">
+                <Field
+                  label="Reason for visit"
+                  htmlFor="booking-reason"
+                  error={fieldErrors.reason_for_visit || reasonError || undefined}
+                  required
+                  hint={
+                    reasonGuidance
+                      ? `Examples for ${selectedDoctor?.department_name}: ${reasonGuidance.examples}`
+                      : "For example: recurring headaches, medicine review, or a skin concern."
+                  }
+                >
                   <Textarea
                     id="booking-reason"
                     value={reason}
                     onChange={(event) => setReason(event.target.value)}
                     placeholder="Describe the main concern in your own words"
                     maxLength={500}
-                    invalid={Boolean(fieldErrors.reason_for_visit)}
+                    invalid={Boolean(fieldErrors.reason_for_visit) || Boolean(reasonError)}
                   />
                 </Field>
                 <p className="mt-1 text-right text-xs text-muted">{reason.length} of 500 characters</p>
+                {selectedDoctor ? (
+                  <div className="mt-3 rounded-xl border border-brand-100 bg-brand-50/60 px-4 py-3 text-xs leading-5 text-brand-900">
+                    <p className="font-bold">{selectedDoctor.department_name} visit reasons</p>
+                    <p className="mt-1">
+                      {reasonGuidance
+                        ? `This specialty handles ${reasonGuidance.topic}. Examples: ${reasonGuidance.examples}.`
+                        : "This specialty accepts a broad range of visit reasons."}
+                    </p>
+                  </div>
+                ) : null}
               </div>
             </section>
           </div>
@@ -383,12 +409,14 @@ export function BookAppointmentPage() {
 
               {fieldErrors.appointment_date ? <p className="mt-3 text-xs font-medium text-rose-700" role="alert">{fieldErrors.appointment_date}</p> : null}
 
-              <Button type="submit" size="lg" className="mt-5 w-full" loading={submitting} disabled={!doctorId || !time || !reason.trim()} icon={<CheckCircle2 className="h-4 w-4" aria-hidden="true" />}>
+              <Button type="submit" size="lg" className="mt-5 w-full" loading={submitting} disabled={!doctorId || !time || !reason.trim() || Boolean(reasonError)} icon={<CheckCircle2 className="h-4 w-4" aria-hidden="true" />}>
                 {submitting ? "Confirming appointment" : "Confirm appointment"}
               </Button>
-              {!doctorId || !time || !reason.trim() ? (
+              {!doctorId || !time || !reason.trim() || reasonError ? (
                 <p className="mt-2 text-center text-[11px] leading-5 text-muted">
-                  Choose a doctor, an open slot, and enter a reason to enable confirmation.
+                  {reasonError
+                    ? "Adjust the reason so it matches the selected specialty."
+                    : "Choose a doctor, an open slot, and enter a reason to enable confirmation."}
                 </p>
               ) : null}
               <p className="mt-4 flex items-start gap-2 border-t border-line pt-4 text-xs leading-5 text-muted">

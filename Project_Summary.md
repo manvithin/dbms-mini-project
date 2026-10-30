@@ -53,6 +53,8 @@ The signed in areas use a left sidebar. The public area uses a top navigation ba
 
 The public home page, sign in page, registration page, and the three role landing pages do not show a back control. Subpages use the shared page header button on signed in pages, the public layout button on public subpages, or a contextual link back to their parent list. The print layout provides its own back button.
 
+The booking form shows specialty examples and blocks a reason that clearly belongs to another department. The backend repeats the check, so a direct API request cannot bypass it. General Medicine stays unrestricted because it is the first contact department.
+
 Dashboard count cards are data driven. Each card shows a total, a short list of real patient or visit records, and a link to the matching filtered list or appointment record. Empty cards explain that no matching records exist.
 
 The visual system includes synthetic doctor portraits, department illustrations, health artwork, colour coded statistics, status badges, loading skeletons, empty states, validation messages, success notifications, and print layouts.
@@ -61,8 +63,8 @@ The visual system includes synthetic doctor portraits, department illustrations,
 
 | Check | Result |
 | --- | --- |
-| Backend tests | 42 passed |
-| Frontend tests | 23 passed across 7 files |
+| Backend tests | 46 passed |
+| Frontend tests | 28 passed across 8 files |
 | Production build | Passed |
 | Demo data reset | Passed |
 | Trigger and procedure check | Present |

@@ -4,12 +4,12 @@
 
 | Check | Command | Result | Recorded on |
 | --- | --- | --- | --- |
-| Backend test suite | `..\.venv\Scripts\python.exe -m pytest -q` | 42 passed in 84.89 seconds | 29 October 2026 |
-| Frontend test suite | `npm test` | 23 passed across 7 files | 29 October 2026 |
-| Production build | `npm run build` | Passed | 29 October 2026 |
+| Backend test suite | `..\.venv\Scripts\python.exe -m pytest -q` | 46 passed in 93.75 seconds | 30 October 2026 |
+| Frontend test suite | `npm test` | 28 passed across 8 files | 30 October 2026 |
+| Production build | `npm run build` | Passed | 30 October 2026 |
 | Database object check | `flask check-db` | Trigger present, procedure present | 29 October 2026 |
 | Demo data reset | `flask reset-demo` | Passed | 29 October 2026 |
-| Browser acceptance | Manual and Playwright screenshots | Completed | 29 October 2026 |
+| Browser acceptance | Manual and Playwright screenshots | Completed | 30 October 2026 |
 
 ## 2. Environment
 
@@ -40,8 +40,8 @@ Command, from `backend`:
 Output:
 
 ```text
-..........................................                               [100%]
-42 passed in 84.89s (0:01:24)
+..............................................                           [100%]
+46 passed in 93.75s (0:01:33)
 ```
 
 ### 3.1 Authentication and access control
@@ -72,6 +72,10 @@ File: `backend/tests/test_public_booking.py`
 | `test_availability_excludes_booked_slots` | A booked slot is not offered |
 | `test_availability_for_past_date_is_empty` | Past dates return no slots |
 | `test_patient_can_book_an_available_slot` | A patient can book a valid slot |
+| `test_booking_rejects_a_reason_for_another_specialty` | A reason that belongs to another department is rejected and no row is created |
+| `test_booking_accepts_a_matching_specialty_reason` | A reason that matches the doctor specialty is accepted |
+| `test_general_medicine_accepts_a_reason_from_another_specialty` | General Medicine accepts any reason |
+| `test_reason_guidance_matches_whole_words` | Whole word matching separates `ear` from `heart` |
 | `test_duplicate_booking_is_rejected_without_a_second_row` | Duplicate booking is rejected and only one row exists |
 | `test_booking_requires_login_and_an_available_slot` | Unauthenticated and invalid slot attempts fail |
 | `test_cancellation_releases_the_slot_and_writes_history` | Cancellation releases the slot and writes audit history |
@@ -125,9 +129,9 @@ npm test
 Output:
 
 ```text
- Test Files  7 passed (7)
-      Tests  23 passed (23)
-   Duration  4.78s
+ Test Files  8 passed (8)
+      Tests  28 passed (28)
+   Duration  6.36s
 ```
 
 ### 4.1 Test files
@@ -141,6 +145,7 @@ Output:
 | `src/components/Pagination.test.tsx` | 2 | Range display and hidden state |
 | `src/components/Button.test.tsx` | 3 | Click, loading, disabled |
 | `src/components/Modal.test.tsx` | 3 | Dialog confirm, cancel and Escape, closed state |
+| `src/utils/reasonGuidance.test.ts` | 5 | Specialty guidance, whole word matching, and mismatch messages |
 
 ### 4.2 Frontend test names
 
@@ -301,6 +306,8 @@ These checks were run with a Playwright script against the running application a
 | Doctor detail page keeps a contextual back link | Passed |
 | Print layout shows a back control | Passed |
 | Back controls return to the parent page or role landing page | Passed |
+| A booking reason that belongs to another specialty is blocked | Passed |
+| A booking reason that matches the specialty enables confirmation | Passed |
 | Patient overview cards open the appointment list and record list | Passed |
 | Doctor card previews open an appointment record | Passed |
 | Administrator patient preview opens the filtered appointment register | Passed |
@@ -327,6 +334,7 @@ The following final screenshots are stored in `screenshots/`:
 | `09-admin-dashboard.png` | Administrator dashboard with live count cards and previews |
 | `10-mobile-home.png` | Mobile home page |
 | `11-doctor-detail.png` | Doctor detail with open slots |
+| `12-booking-reason-guidance.png` | Booking reason blocked because it belongs to another specialty |
 
 The capture run reported six `401` responses for `/api/auth/me` on public pages. These are expected because the application checks whether a visitor has a session. There were no 404 responses and no page errors in the final run.
 
