@@ -398,7 +398,7 @@ The live check on 30 October 2026 confirmed:
 | Vercel footer no longer shows the standalone synthetic data line | Passed |
 | Live frontend asset matches the local production build | Passed |
 
-The Aiven database still lacks the `system_setting` table, so the backend fallback is what keeps setup closed. Apply the migration to make the marker explicit. The production administrator password rotation is still pending.
+The Aiven database still lacks the `system_setting` table, so the backend fallback is what keeps setup closed. Apply the migration to make the marker explicit. The production administrator password rotation is still pending. The live administrator account is `admin@cityhospital.example` (email). The original demonstration password `Admin@123` still works locally. Rotate it as documented in [Deployment_Guide.md](Deployment_Guide.md) section 6.
 
 ## 8. Screenshot evidence
 

@@ -29,7 +29,17 @@ The live demonstration is split across three free services:
 | Backend API | Render | `https://dbms-mini-project-ybmr.onrender.com` |
 | Database | Aiven MySQL 8.4 | Private Aiven service |
 
-The live frontend now serves the security build. The live setup page reports that setup is already complete, and the login page no longer offers an administrator demo account. The live API includes a compatibility fallback for the missing `system_setting` table, but the Aiven migration should still be applied. The production administrator password has not yet been rotated. See [Deployment_Guide.md](Deployment_Guide.md).
+The live frontend now serves the security build. The live setup page reports that setup is already complete, and the login page no longer offers an administrator demo account. The live API includes a compatibility fallback for the missing `system_setting` table, but the Aiven migration should still be applied. The production administrator password has not yet been rotated.
+
+The live administrator account is `admin@cityhospital.example`. The original demonstration password from the seed file was `Admin@123`. To rotate it, run with the production `DATABASE_URL`:
+
+```powershell
+cd backend
+$env:FLASK_APP = "run.py"
+..\.venv\Scripts\flask.exe setup-admin --rotate --email admin@example.com --current-password Admin@123
+```
+
+After rotation, the new password must be stored in a password manager and added to Render's environment variable `ADMIN_SETUP_SECRET` (removed after setup is confirmed complete).
 
 ## Roles
 

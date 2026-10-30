@@ -200,6 +200,16 @@ new password login -> 200
 
 If the production database has no administrator, use the first time setup page or `flask setup-admin` without `--rotate` and with `ADMIN_SETUP_SECRET`. If an administrator exists, setup returns `409 setup_completed`.
 
+The live administrator account is `admin@cityhospital.example`. The original demonstration password from the seed was `Admin@123`. If you need to rotate the production administrator password, run the command with the production `DATABASE_URL` and use `Admin@123` as the `--current-password`:
+
+```powershell
+cd backend
+$env:FLASK_APP = "run.py"
+..\.venv\Scripts\flask.exe setup-admin --rotate --email admin@example.com --current-password Admin@123
+```
+
+After rotation, the new password must be stored in a password manager and added to Render's environment variable `ADMIN_SETUP_SECRET` (removed after setup is complete per section 7). The old password stops working immediately because the hash fingerprint changes.
+
 ## 7. Deployment order
 
 Use this order to avoid a window where the new frontend talks to an old API:
