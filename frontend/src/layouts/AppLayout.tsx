@@ -187,7 +187,6 @@ export function AppLayout() {
         <footer className="border-t border-line px-4 py-5 text-xs text-muted sm:px-6 lg:px-8">
           <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-2">
             <p>General Hospital outpatient management system</p>
-            <p>Synthetic demonstration data</p>
           </div>
         </footer>
       </div>

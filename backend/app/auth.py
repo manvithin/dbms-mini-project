@@ -5,7 +5,7 @@ from datetime import date
 from functools import wraps
 
 from flask import Blueprint, current_app, jsonify, request, session
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .errors import ApiError
@@ -136,17 +136,32 @@ def start_session(user):
 
 
 def setup_completed():
-    marker = db.session.get(System_Setting, ADMIN_SETUP_KEY)
+    try:
+        marker = db.session.get(System_Setting, ADMIN_SETUP_KEY)
+    except SQLAlchemyError:
+        # Older databases may not have the system_setting table yet. The
+        # administrator row still closes setup so it cannot run twice.
+        db.session.rollback()
+        return User_Account.query.filter_by(role="admin").first() is not None
     if marker is not None:
         return True
     return User_Account.query.filter_by(role="admin").first() is not None
 
 
 def mark_setup_completed(value="completed"):
-    marker = db.session.get(System_Setting, ADMIN_SETUP_KEY)
-    if marker is None:
-        db.session.add(System_Setting(setting_key=ADMIN_SETUP_KEY, setting_value=value))
-
+    try:
+        with db.session.begin_nested():
+            marker = db.session.get(System_Setting, ADMIN_SETUP_KEY)
+            if marker is None:
+                db.session.add(
+                    System_Setting(setting_key=ADMIN_SETUP_KEY, setting_value=value)
+                )
+    except SQLAlchemyError:
+        # Keep the administrator account usable until the pending migration
+        # creates system_setting. The administrator row still closes setup.
+        current_app.logger.warning(
+            "Could not record the administrator setup marker. Apply the pending database migration."
+        )
 
 
 @auth_bp.get("/csrf")

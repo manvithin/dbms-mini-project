@@ -1,3 +1,4 @@
+from sqlalchemy.exc import OperationalError
 from werkzeug.security import check_password_hash
 
 from app.extensions import db
@@ -166,6 +167,62 @@ def test_setup_marker_stays_closed_after_administrator_is_removed(
         },
     )
     assert retry.status_code == 409
+
+
+def test_setup_status_falls_back_when_system_setting_table_is_missing(
+    client, seeded, monkeypatch
+):
+    original_get = db.session.get
+
+    def missing_table_get(entity, ident, **kwargs):
+        if entity is System_Setting:
+            raise OperationalError(
+                "SELECT setting_key FROM system_setting",
+                {},
+                Exception("table does not exist"),
+            )
+        return original_get(entity, ident, **kwargs)
+
+    monkeypatch.setattr(db.session, "get", missing_table_get)
+
+    response = client.get("/api/auth/setup-status")
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["setup_completed"] is True
+    assert payload["setup_required"] is False
+    assert payload["admin_exists"] is True
+
+
+def test_setup_admin_succeeds_when_system_setting_table_is_missing(
+    client, app, seeded_no_admin, monkeypatch
+):
+    original_get = db.session.get
+
+    def missing_table_get(entity, ident, **kwargs):
+        if entity is System_Setting:
+            raise OperationalError(
+                "SELECT setting_key FROM system_setting",
+                {},
+                Exception("table does not exist"),
+            )
+        return original_get(entity, ident, **kwargs)
+
+    monkeypatch.setattr(db.session, "get", missing_table_get)
+
+    response = client.post(
+        "/api/auth/setup-admin",
+        json={
+            "email": "fallback.admin@example.com",
+            "password": "FallbackAdmin123",
+            "confirm_password": "FallbackAdmin123",
+            "setup_secret": TEST_SETUP_SECRET,
+        },
+    )
+    assert response.status_code == 201
+
+    with app.app_context():
+        account = User_Account.query.filter_by(username="fallback.admin@example.com").one()
+        assert account.role == "admin"
 
 
 def test_administrator_password_change_requires_current_password(client, seeded):

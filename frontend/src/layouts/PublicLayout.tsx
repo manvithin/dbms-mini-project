@@ -156,7 +156,6 @@ export function PublicLayout() {
         <div className="border-t border-line">
           <div className="content-width flex flex-col justify-between gap-2 py-5 text-xs text-muted sm:flex-row">
             <p>General Hospital outpatient management system</p>
-            <p>Synthetic demonstration data | Educational project</p>
           </div>
         </div>
       </footer>
