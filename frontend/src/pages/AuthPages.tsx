@@ -135,9 +135,9 @@ export function LoginPage() {
           </p>
           <p className="text-center text-xs text-muted">
             First time administrator?{" "}
-            <Link to="/setup" className="font-semibold text-brand-700 underline-offset-2 hover:underline">
+            <span className="font-semibold text-brand-700 underline-offset-2 hover:underline">
               Set up the administrator account
-            </Link>
+            </span>
           </p>
         </form>
 
@@ -198,7 +198,6 @@ export function LoginPage() {
             </div>
           </div>
           <div className="mt-5 border-t border-brand-100 pt-4">
-            <p className="text-xs leading-5 text-muted">Teaching project with synthetic data. Do not enter real patient information.</p>
           </div>
         </div>
       </div>

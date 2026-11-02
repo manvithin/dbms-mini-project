@@ -204,7 +204,8 @@ def my_appointments():
             or_(
                 Appointment.appointment_date < today,
                 Appointment.status.in_(("Completed", "Cancelled", "No Show")),
-            )
+            ),
+            Appointment.status.notin_(("Booked",)),
         ).order_by(Appointment.appointment_date.desc(), Appointment.appointment_time.desc())
     else:
         query = query.order_by(Appointment.appointment_date.desc(), Appointment.appointment_time.desc())

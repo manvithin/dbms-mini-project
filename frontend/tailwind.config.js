@@ -61,7 +61,31 @@ export default {
         "fade-in": "fade-in 0.3s ease-out both",
         "scale-in": "scale-in 0.2s ease-out both",
       },
+      screens: {
+        xs: "475px",
+        sm: "640px",
+        md: "768px",
+        lg: "1024px",
+        xl: "1280px",
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    function ({ addComponents }) {
+      addComponents({
+        ".container-center": {
+          maxWidth: "1280px",
+          marginLeft: "auto",
+          marginRight: "auto",
+        },
+        ".btn-primary": {
+          backgroundColor: "brand.600",
+          color: "white",
+          _hover: {
+            backgroundColor: "brand.700",
+          },
+        },
+      });
+    },
+  ],
 };
