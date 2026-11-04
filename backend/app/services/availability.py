@@ -151,9 +151,8 @@ def admin_can_cancel(appointment):
 
 
 DOCTOR_STATUS_TRANSITIONS = {
-    "Booked": {"Confirmed", "Checked In", "Cancelled", "No Show"},
-    "Confirmed": {"Checked In", "Cancelled", "No Show"},
-    "Checked In": {"In Consultation", "Cancelled"},
+    "Booked": {"Confirmed", "In Consultation", "Cancelled", "No Show"},
+    "Confirmed": {"In Consultation", "Cancelled", "No Show"},
     "In Consultation": {"Completed"},
     "Completed": set(),
     "Cancelled": set(),
@@ -166,4 +165,4 @@ def doctor_can_change_status(current_status, new_status):
 
 
 def can_write_clinical_records(appointment):
-    return appointment.status in ("Checked In", "In Consultation", "Completed")
+    return appointment.status in ("In Consultation", "Completed")

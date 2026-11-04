@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import secrets
+import re
 from datetime import date
 from functools import wraps
 
@@ -372,6 +373,45 @@ def logout():
     session.clear()
     token = ensure_csrf_token()
     return jsonify({"message": "Signed out successfully.", "csrf_token": token})
+
+
+@auth_bp.post("/change-password")
+@role_required("doctor")
+def change_password():
+    """Doctor changes their own password."""
+    data = json_body()
+    current_password = data.get("current_password")
+    new_password = data.get("new_password")
+    confirm_password = data.get("confirm_password")
+
+    if not current_password or not new_password:
+        fields = {}
+        if not current_password:
+            fields["current_password"] = "Current password is required."
+        if not new_password:
+            fields["new_password"] = "New password is required."
+        if confirm_password != new_password:
+            fields["confirm_password"] = "Passwords do not match."
+        raise ApiError("Please correct the highlighted fields.", 400, "validation_error", fields)
+
+    user = get_current_user()
+    if not check_password_hash(user.password_hash, current_password):
+        raise ApiError("Current password is incorrect.", 400, "invalid_current_password")
+
+    if len(new_password) < 8 or not re.search(r"[A-Za-z]", new_password) or not re.search(r"[0-9]", new_password):
+        raise ApiError("Password must be at least 8 characters with at least one letter and one number.", 400, "validation_error")
+
+    user.password_hash = generate_password_hash(new_password, method="pbkdf2:sha256:600000")
+    db.session.commit()
+    start_session(user)
+    token = session.get(CSRF_SESSION_KEY)
+    return jsonify(
+        {
+            "message": "Password changed successfully.",
+            "user": serialize_user(user),
+            "csrf_token": token,
+        }
+    )
 
 
 @auth_bp.get("/me")
