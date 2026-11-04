@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Phone, Stethoscope } from "lucide-react";
+import { ArrowRight, KeyRound, Phone, Stethoscope } from "lucide-react";
 import { api, ApiError, errorMessage } from "../../api/client";
 import type { Doctor, DoctorProfileResponse } from "../../types";
 import { Alert } from "../../components/Alert";
@@ -69,7 +69,7 @@ export function DoctorProfilePage() {
     setFormError("");
     setSaving(true);
     try {
-      const response = await api.post<{ user: any; message: string }>("/auth/change-password", {
+      await api.post<{ user: any; message: string }>("/auth/change-password", {
         current_password: currentPassword,
         new_password: newPassword,
         confirm_password: confirmPassword,
