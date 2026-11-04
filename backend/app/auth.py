@@ -376,9 +376,9 @@ def logout():
 
 
 @auth_bp.post("/change-password")
-@role_required("doctor")
+@login_required
 def change_password():
-    """Doctor changes their own password."""
+    """User changes their own password."""
     data = json_body()
     current_password = data.get("current_password")
     new_password = data.get("new_password")

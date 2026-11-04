@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Mail, RotateCcw, Save, ShieldCheck } from "lucide-react";
+import { ArrowRight, CheckCircle2, Mail, RotateCcw, Save, ShieldCheck } from "lucide-react";
 import { useApi } from "../../hooks/useApi";
 import { api, ApiError, errorMessage } from "../../api/client";
 import type { ProfileResponse } from "../../types";
@@ -39,6 +39,9 @@ export function PatientProfilePage() {
   const { push } = useToast();
   const [form, setForm] = useState<ProfileForm>(emptyForm);
   const [initial, setInitial] = useState<ProfileForm>(emptyForm);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -109,6 +112,27 @@ export function PatientProfilePage() {
       setFormError(errorMessage(error));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handlePasswordChange(event: React.FormEvent) {
+    event.preventDefault();
+    setFieldErrors({});
+    setFormError("");
+    try {
+      await api.post<{ message: string }>("/auth/change-password", {
+        current_password: currentPassword,
+        new_password: newPassword,
+        confirm_password: confirmPassword,
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setSuccess(true);
+      push("Password changed successfully.", "success");
+    } catch (error) {
+      if (error instanceof ApiError && error.fields) setFieldErrors(error.fields);
+      setFormError(errorMessage(error));
     }
   }
 
@@ -196,6 +220,67 @@ export function PatientProfilePage() {
                 </Button>
               </div>
               {!dirty ? <p className="mt-2 text-right text-xs text-muted">There are no unsaved changes.</p> : null}
+            </form>
+          </SectionCard>
+
+          <SectionCard title="Change password" description="Update your sign-in password.">
+            <form onSubmit={handlePasswordChange} noValidate className="space-y-4">
+              {formError ? (
+                <Alert variant="error" title="Password change failed" onDismiss={() => setFormError("")}>
+                  {formError}
+                </Alert>
+              ) : null}
+              <Field
+                label="Current password"
+                htmlFor="patient-current-password"
+                error={fieldErrors.current_password}
+                hint="Enter your current password."
+                required
+              >
+                <Input
+                  id="patient-current-password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={(event) => setCurrentPassword(event.target.value)}
+                  invalid={Boolean(fieldErrors.current_password)}
+                />
+              </Field>
+              <Field
+                label="New password"
+                htmlFor="patient-new-password"
+                error={fieldErrors.new_password}
+                hint="At least 8 characters with one letter and one number."
+                required
+              >
+                <Input
+                  id="patient-new-password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
+                  invalid={Boolean(fieldErrors.new_password)}
+                />
+              </Field>
+              <Field
+                label="Confirm new password"
+                htmlFor="patient-confirm-password"
+                error={fieldErrors.confirm_password}
+                hint="Enter the same password as above."
+                required
+              >
+                <Input
+                  id="patient-confirm-password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  invalid={Boolean(fieldErrors.confirm_password)}
+                />
+              </Field>
+              <Button type="submit" icon={<ArrowRight className="h-4 w-4" aria-hidden="true" />}>
+                Change password
+              </Button>
             </form>
           </SectionCard>
 
